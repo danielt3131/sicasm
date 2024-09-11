@@ -7,7 +7,7 @@ struct stringArray {
     char **stringArray;
     int numStrings;
     int allocatedAmount;
-    int *type;
+    int type[4];
 };
 
 #define DEFAULT_AMOUNT 2
