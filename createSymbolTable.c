@@ -5,6 +5,12 @@
 #include <stdlib.h>
 
 void freeSplit(struct stringArray *split);
+
+/**
+ * @brief Creates a symbol table for the SIC archtecture
+ * @param file The file pointer for the assembly file 
+ * @return The pointer to the symbol table or NULL if there was an error
+ */
 struct symbolTable* createSymbolTable(FILE *file) {
     char currentLine[100];
     struct symbolTable *symbolTable = malloc(sizeof(struct symbolTable));
@@ -17,9 +23,9 @@ struct symbolTable* createSymbolTable(FILE *file) {
     bool seenStart = false;
     bool seenEnd = false;
     while (fgets(currentLine, 100, file) != NULL) {
-        if (isspace(currentLine[0]) && !seenEnd) {
+        if ((currentLine[0] == '\r' || currentLine[0] == '\n') && !seenEnd) {
             freeSymbolTable(symbolTable);
-            fprintf(stderr, "Whitespace found");
+            fprintf(stderr, "Whitespace found %d\n", lineNumber);
             return NULL;
         }
         if (currentLine[0] != '#') {
@@ -28,7 +34,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                     symbolTable->allocatedAmount = symbolTable->allocatedAmount * 2;
                     symbolTable->symbols = realloc(symbolTable->symbols, sizeof(symbol) * symbolTable->allocatedAmount);
                 }
-                struct stringArray *split = stringSplit(currentLine, "\t \n");
+                struct stringArray *split = stringSplit(currentLine, "\t\n");
                 if (isValidSymbol(split->stringArray[0], symbolTable) && split->numStrings >= 2) {
                     symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[0]) + 1);
                     strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[0]);
@@ -58,6 +64,12 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             int i = 2;
                             int size = 0;
                             while (split->stringArray[2][i] != '\'' && split->stringArray[2][i] != '\0') {
+                                if (!(isdigit(split->stringArray[2][i]) || (split->stringArray[2][i] >='A' &&  split->stringArray[2][i] <= 'F'))) {
+                                    freeSplit(split);
+                                    freeSymbolTable(symbolTable);
+                                    fprintf(stderr, "Line %d contains invalid hexadecimal\r\n", lineNumber + 1);
+                                    return NULL;
+                                }
                                 i++;
                                 size++;
                             }
@@ -68,12 +80,18 @@ struct symbolTable* createSymbolTable(FILE *file) {
                         symbolTable->symbols[currentSymbol].address = address;
                         address = address + (atoi(split->stringArray[2]) * 3);
                     } else if (!strcmp(split->stringArray[1], "WORD")) {
-                        if (atoi(split->stringArray[2]) <= MAX_WORD_SIZE) {
+                        if (abs(atoi(split->stringArray[2])) <= MAX_WORD_SIZE) {
                             symbolTable->symbols[currentSymbol].address = address;
                             address += 3;
+                        } else {
+                            fprintf(stderr, "Line %d word constant exceeds 24 bits\r\n", lineNumber + 1);
+                            freeSplit(split);
+                            freeSymbolTable(symbolTable);
+                            return NULL;
                         }
                     } else if (!strcmp(split->stringArray[1], "END")) {
                         seenEnd = true;
+                        symbolTable->symbols[currentSymbol].address = address;
                     } else {
                         symbolTable->symbols[currentSymbol].address = address;
                         address += 3;
@@ -90,6 +108,11 @@ struct symbolTable* createSymbolTable(FILE *file) {
                 //puts("Created Symbol\n");
             } else {
                 address += 3;
+            }
+            if (address >= RAM_LIMIT) {
+                freeSymbolTable(symbolTable);
+                fprintf(stderr, "SIC memory exhausted tried to use 0x%x at line %d when the limit is 0x8000\n", address, lineNumber);
+                return NULL;
             }
         }
     //printf("%s \t %X\n", currentLine, address);

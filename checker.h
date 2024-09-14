@@ -13,5 +13,6 @@ const char *opcodes[];
 #define NUMBER_OF_DIRECTIVES 8
 #define NUMBER_OF_OPCODES 59
 #define MAX_WORD_SIZE 1048575
+#define RAM_LIMIT 32768
 bool containsValidCharacters(char *string);
 #endif
