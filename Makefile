@@ -1,8 +1,8 @@
 SHELL := /bin/bash
 CC = gcc
-TARGET = p1
+TARGET = project1
 CFLAGS = -Wall -Wextra -g -O0
-OBJS = p1.o fileParser.o checker.o
+OBJS = p1.o createSymbolTable.o checker.o freeSymbolTable.o
 all: $(TARGET)
 
 $(TARGET) : $(OBJS)

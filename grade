@@ -1,0 +1,43 @@
+#!/usr/bin/sh
+echo ----------------------------------------------------------------
+echo ----------------------------------------------------------------
+cat documentation.txt
+echo ----------------------------------------------------------------
+echo Running Make
+make
+echo
+echo
+echo ----------------------------------------------------------------
+echo Testing with No Command-line args
+./project1
+echo ----------------------------------------------------------------
+echo Testing with Correct SIC Assembly
+./project1 test1.sic
+echo ----------------------------------------------------------------
+echo Testing case 2  SIC Program Has CLOOP defined twice
+./project1 test2.sic
+echo ----------------------------------------------------------------
+echo Testing case 3  SIC Program Has  Invalid Hex Constant  
+./project1 test3.sic
+echo ----------------------------------------------------------------
+echo Testing case 4  SIC Program HasSymbol Name that is an assembler Directive BYTE 
+./project1 test4.sic
+echo ----------------------------------------------------------------
+echo Testing case 5  SIC Program Starts at Hex 8000. No room left in SIC memory.   
+./project1 test5.sic
+echo ----------------------------------------------------------------
+echo Testing case 6  Long Byte Constant that is ok   
+./project1 test6.sic
+echo ----------------------------------------------------------------
+echo Testing case 7  Has blank lines - violates specification. Pass1 should stop   
+./project1 test7.sic
+echo ----------------------------------------------------------------
+echo Testing case 8 WORD COntant Exceeds 24 bit limitation   
+./project1 test8.sic
+echo ----------------------------------------------------------------
+echo Testing case 9 Program Has Invalid Symbol Name  
+./project1 test9.sic
+echo ----------------------------------------------------------------
+echo Testing case 10 Program Does not fit in SIC Memory 
+./project1 test10.sic
+

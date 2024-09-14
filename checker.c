@@ -4,6 +4,7 @@
 #include <ctype.h>
 
 bool isValidSymbol(char *currentSymbol, struct symbolTable* table) {
+    //printf("%s\n", currentSymbol);
     if (!isalpha(currentSymbol[0])) {
         return false;
     }
@@ -19,6 +20,9 @@ bool isValidSymbol(char *currentSymbol, struct symbolTable* table) {
     if (!containsValidCharacters(currentSymbol)) {
         return false;
     }
+    if (table->numberOfSymbols == 0) {
+        return true;
+    }
     for (int i = 0; i < table->numberOfSymbols; i++) {
         if(!strcmp(currentSymbol, table->symbols[i].name)) {
             return false;
@@ -27,13 +31,6 @@ bool isValidSymbol(char *currentSymbol, struct symbolTable* table) {
     return true;
 }
 
-int newStrlen(char *str) {
-    int length = 0;
-    while(str[length] != '\0') {
-        length++;
-    }
-    return length + 1;
-}
 
 bool containsValidCharacters(char *string) {
     int length = strlen(string);

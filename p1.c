@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "fileParser.h"
+#include "tables.h"
 
 
 
@@ -12,8 +12,8 @@ int main(int argc, char **argv) {
         return (EXIT_FAILURE);
     }
     */
-    FILE *fp = fopen("copymystring.sic", "r");
-    //FILE *fp = fopen(argv[1], "r");
+    //FILE *fp = fopen("copymystring.sic", "r");
+    FILE *fp = fopen(argv[1], "r");
     if (fp == NULL) {
         printf("The file %s does not exist\n", argv[1]);
         return EXIT_FAILURE;
@@ -34,23 +34,14 @@ int main(int argc, char **argv) {
 
     fclose(fp);
     */
-    struct lines *allLines = readFile(fp, argv[1]);
-    if (allLines == NULL) {
-        perror("Error");
+    struct symbolTable *symbolTable = createSymbolTable(fp);
+    if (symbolTable == NULL) {
         return EXIT_FAILURE;
     }
-    //printf("Num Lines: %d\n", allLines->numLines);
-    for (int i = 0; i < allLines->numLines; i++) {
-        //printf("Num strings: %d\n", allLines->tokens[i].numStrings);
-        for (int j = 0; j < allLines->tokens[i].numStrings; j++) {
-            //printf("%s %d|%d ", allLines->tokens[i].stringArray[j], i, j);
-            printf("%s\n", allLines->tokens[i].stringArray[j]);
-            free(allLines->tokens[i].stringArray[j]);
-        }
-        free(allLines->tokens[i].stringArray);
-        //printf("\n");
+    
+    for (int i = 0; i < symbolTable->numberOfSymbols; i++) {
+        printf("%s \t %X\n", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
     }
-    free(allLines->tokens);
-    free(allLines);
+    freeSymbolTable(symbolTable);
     return (EXIT_SUCCESS);
 }

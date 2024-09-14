@@ -1,19 +1,21 @@
 #ifndef TABLES_H
 #define TABLES_H
 #include <stdio.h>
+/*
 typedef struct {
     char *instruction;
     short numOperands;
     char *operands[2];
 } instruction;
+*/
 
 typedef struct {
     char *name;
     int address;
     int lineNumber;
-    int numInstructions;
-    int allocatedInstructionAmount;
-    instruction *instructions;
+    //int numInstructions;
+    //int allocatedInstructionAmount;
+    //instruction *instructions;
 } symbol;
 
 struct symbolTable {
@@ -28,7 +30,7 @@ struct stringArray {
     int allocatedAmount;
 };
 
-struct stringArray* stringSplit(char *string, char delim);
-void freeSplit(struct stringArray *split);
+struct stringArray* stringSplit(char *string, char *delim);
+void freeSymbolTable(struct symbolTable*);
 struct symbolTable* createSymbolTable(FILE *file);
 #endif
