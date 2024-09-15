@@ -115,8 +115,8 @@ struct symbolTable* createSymbolTable(FILE *file) {
                 return NULL;
             }
         }
-    //printf("%s \t %X\n", currentLine, address);
-    lineNumber++;
+        //printf("%s \t %X\n", currentLine, address);
+        lineNumber++;
     }
     fclose(file);
     return symbolTable;
