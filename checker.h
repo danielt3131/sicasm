@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "tables.h"
-bool isValidSymbol(char *currentSymbol, struct symbolTable* table);
+bool isValidSymbol(char *currentSymbol, struct symbolTable* table, int lineNumber);
 bool isDirective(char *directive);
 bool isOpcode(char *opcode);
 // Supports 1 and 2 operands

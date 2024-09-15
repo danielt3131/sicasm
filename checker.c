@@ -3,21 +3,26 @@
 #include <string.h>
 #include <ctype.h>
 
-bool isValidSymbol(char *currentSymbol, struct symbolTable* table) {
+bool isValidSymbol(char *currentSymbol, struct symbolTable* table, int lineNumber) {
     //printf("%s\n", currentSymbol);
     if (!isalpha(currentSymbol[0])) {
+        fprintf(stderr, "Line %d symbol %s isn't valid due to starting with a character that isn't A-Z\r\n", lineNumber, currentSymbol);
         return false;
     }
     if (isDirective(currentSymbol)) {
+        fprintf(stderr, "Line %d symbol %s isn't valid due to being a directive\r\n", lineNumber, currentSymbol);
         return false;
     }
     if (isOpcode(currentSymbol)) {
+        fprintf(stderr, "Line %d symbol %s isn't valid due to being an opcode A-Z\r\n", lineNumber, currentSymbol);
         return false;
     }
     if (strlen(currentSymbol) > 6) {
+        fprintf(stderr, "Line %d symbol %s isn't valid due to being longer than 6 characters\r\n", lineNumber, currentSymbol);
         return false;
     }
     if (!containsValidCharacters(currentSymbol)) {
+        fprintf(stderr, "Line %d symbol %s isn't valid because it contains an invalid character\r\n", lineNumber, currentSymbol);
         return false;
     }
     if (table->numberOfSymbols == 0) {
@@ -25,6 +30,7 @@ bool isValidSymbol(char *currentSymbol, struct symbolTable* table) {
     }
     for (int i = 0; i < table->numberOfSymbols; i++) {
         if(!strcmp(currentSymbol, table->symbols[i].name)) {
+            fprintf(stderr, "Line %d symbol %s isn't valid because the symbol was already declared at Line %d\r\n", lineNumber, currentSymbol, table->symbols[i].lineNumber);
             return false;
         }
     }

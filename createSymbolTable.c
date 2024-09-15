@@ -19,13 +19,13 @@ struct symbolTable* createSymbolTable(FILE *file) {
     symbolTable->numberOfSymbols = 0;
     int address = 0;
     int currentSymbol = 0;
-    int lineNumber = 0;
+    int lineNumber = 1;
     bool seenStart = false;
     bool seenEnd = false;
     while (fgets(currentLine, 100, file) != NULL) {
         if ((currentLine[0] == '\r' || currentLine[0] == '\n') && !seenEnd) {
             freeSymbolTable(symbolTable);
-            fprintf(stderr, "Whitespace found %d\n", lineNumber);
+            fprintf(stderr, "Whitespace found at Line %d\n", lineNumber);
             return NULL;
         }
         if (currentLine[0] != '#') {
@@ -35,7 +35,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                     symbolTable->symbols = realloc(symbolTable->symbols, sizeof(symbol) * symbolTable->allocatedAmount);
                 }
                 struct stringArray *split = stringSplit(currentLine, "\t\n");
-                if (isValidSymbol(split->stringArray[0], symbolTable) && split->numStrings >= 2) {
+                if (isValidSymbol(split->stringArray[0], symbolTable, lineNumber) && split->numStrings >= 2) {
                     symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[0]) + 1);
                     strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[0]);
                     symbolTable->symbols[currentSymbol].lineNumber = lineNumber;
@@ -67,7 +67,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                                 if (!(isdigit(split->stringArray[2][i]) || (split->stringArray[2][i] >='A' &&  split->stringArray[2][i] <= 'F'))) {
                                     freeSplit(split);
                                     freeSymbolTable(symbolTable);
-                                    fprintf(stderr, "Line %d contains invalid hexadecimal\r\n", lineNumber + 1);
+                                    //fprintf(stderr, "Line %d contains invalid hexadecimal\r\n", lineNumber);
                                     return NULL;
                                 }
                                 i++;
@@ -84,7 +84,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             symbolTable->symbols[currentSymbol].address = address;
                             address += 3;
                         } else {
-                            fprintf(stderr, "Line %d word constant exceeds 24 bits\r\n", lineNumber + 1);
+                           // fprintf(stderr, "Line %d word constant exceeds 24 bits\r\n", lineNumber);
                             freeSplit(split);
                             freeSymbolTable(symbolTable);
                             return NULL;
@@ -99,7 +99,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                     currentSymbol++;
                     symbolTable->numberOfSymbols++;
                 } else {
-                    fprintf(stderr, "Line %d symbol %s isn't valid\r\n", lineNumber + 1, split->stringArray[0]);
+                    //fprintf(stderr, "Line %d symbol %s isn't valid\r\n", lineNumber, split->stringArray[0]);
                     freeSplit(split);
                     freeSymbolTable(symbolTable);
                     return NULL;
@@ -109,7 +109,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
             } else {
                 address += 3;
             }
-            if (address >= RAM_LIMIT) {
+            if (address > RAM_LIMIT) {
                 freeSymbolTable(symbolTable);
                 fprintf(stderr, "SIC memory exhausted tried to use 0x%x at line %d when the limit is 0x8000\n", address, lineNumber);
                 return NULL;
