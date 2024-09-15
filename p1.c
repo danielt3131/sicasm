@@ -6,12 +6,10 @@
 
 
 int main(int argc, char **argv) {
-    /*
     if (argc != 2) {
         printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
         return (EXIT_FAILURE);
     }
-    */
     //FILE *fp = fopen("copymystring.sic", "r");
     FILE *fp = fopen(argv[1], "r");
     if (fp == NULL) {
@@ -40,7 +38,7 @@ int main(int argc, char **argv) {
     }
     
     for (int i = 0; i < symbolTable->numberOfSymbols; i++) {
-        printf("%s \t %X\n", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
+        printf("%s \t 0x%X\n", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
     }
     freeSymbolTable(symbolTable);
     return (EXIT_SUCCESS);

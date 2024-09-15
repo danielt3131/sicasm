@@ -84,7 +84,7 @@ bool isOpcode(char *opcode){
     }
     return false;
 }
-
+/*
 // Supports 1 and 2 operands
 bool isValidOperand(char **operand, char *instruction){
     for (int i = 0; i < NUMBER_OF_OPCODES; i++) {
@@ -94,3 +94,4 @@ bool isValidOperand(char **operand, char *instruction){
     }
     return false;
 }
+*/
