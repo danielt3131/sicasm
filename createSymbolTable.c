@@ -12,7 +12,7 @@ void freeSplit(struct stringArray *split);
  * @return The pointer to the symbol table or NULL if there was an error
  */
 struct symbolTable* createSymbolTable(FILE *file) {
-    char currentLine[100];
+    char currentLine[1000];
     struct symbolTable *symbolTable = malloc(sizeof(struct symbolTable));
     symbolTable->symbols = malloc(5 * sizeof(symbol));
     symbolTable->allocatedAmount = 5;
@@ -67,7 +67,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                                 if (!(isdigit(split->stringArray[2][i]) || (split->stringArray[2][i] >='A' &&  split->stringArray[2][i] <= 'F'))) {
                                     freeSplit(split);
                                     freeSymbolTable(symbolTable);
-                                    //fprintf(stderr, "Line %d contains invalid hexadecimal\r\n", lineNumber);
+                                    fprintf(stderr, "Line %d contains invalid hexadecimal\r\n", lineNumber);
                                     return NULL;
                                 }
                                 i++;
@@ -84,7 +84,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             symbolTable->symbols[currentSymbol].address = address;
                             address += 3;
                         } else {
-                           // fprintf(stderr, "Line %d word constant exceeds 24 bits\r\n", lineNumber);
+                            fprintf(stderr, "Line %d word constant exceeds 24 bits\r\n", lineNumber);
                             freeSplit(split);
                             freeSymbolTable(symbolTable);
                             return NULL;
