@@ -1,3 +1,6 @@
+/**
+ * @author Daniel J. Thompson (N01568044)
+ */
 #include "checker.h"
 #include "tables.h"
 #include <string.h>
@@ -22,7 +25,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
     int lineNumber = 1;
     bool seenStart = false;
     bool seenEnd = false;
-    while (fgets(currentLine, 100, file) != NULL) {
+    while (fgets(currentLine, 1000, file) != NULL) {
         if ((currentLine[0] == '\r' || currentLine[0] == '\n') && !seenEnd) {
             freeSymbolTable(symbolTable);
             fprintf(stderr, "Whitespace found at Line %d\n", lineNumber);
@@ -111,14 +114,14 @@ struct symbolTable* createSymbolTable(FILE *file) {
             }
             if (address > RAM_LIMIT) {
                 freeSymbolTable(symbolTable);
-                fprintf(stderr, "SIC memory exhausted tried to use 0x%x at line %d when the limit is 0x8000\n", address, lineNumber);
+                fprintf(stderr, "SIC memory exhausted tried to use %x at line %d when the limit is 7FFF\n", address, lineNumber);
                 return NULL;
             }
         }
         //printf("%s \t %X\n", currentLine, address);
         lineNumber++;
     }
-    fclose(file);
+    
     return symbolTable;
 }
 

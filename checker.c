@@ -1,3 +1,6 @@
+/**
+ * @author Daniel J. Thompson (N01568044)
+ */
 #include "checker.h"
 #include "tables.h"
 #include <string.h>

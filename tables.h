@@ -1,3 +1,6 @@
+/**
+ * @author Daniel J. Thompson (N01568044)
+ */
 #ifndef TABLES_H
 #define TABLES_H
 #include <stdio.h>

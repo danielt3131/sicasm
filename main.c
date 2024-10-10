@@ -1,3 +1,6 @@
+/**
+ * @author Daniel J. Thompson (N01568044)
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,12 +36,13 @@ int main(int argc, char **argv) {
     fclose(fp);
     */
     struct symbolTable *symbolTable = createSymbolTable(fp);
+    fclose(fp);
     if (symbolTable == NULL) {
         return EXIT_FAILURE;
     }
     
     for (int i = 0; i < symbolTable->numberOfSymbols; i++) {
-        printf("%s \t 0x%X\n", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
+        printf("%s \t %X\n", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
     }
     freeSymbolTable(symbolTable);
     return (EXIT_SUCCESS);

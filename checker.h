@@ -1,3 +1,6 @@
+/**
+ * @author Daniel J. Thompson (N01568044)
+ */
 #ifndef CHECKER_H
 #define CHECKER_H
 #include <stdio.h>
@@ -12,6 +15,6 @@ bool isOpcode(char *opcode);
 #define NUMBER_OF_DIRECTIVES 8
 #define NUMBER_OF_OPCODES 59
 #define MAX_WORD_SIZE 1048575
-#define RAM_LIMIT 32768
+#define RAM_LIMIT 32767
 bool containsValidCharacters(char *string);
 #endif
