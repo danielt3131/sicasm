@@ -55,15 +55,14 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             int i = 2;
                             int size = 0;
                             while (split->stringArray[2][i] != '\'' && split->stringArray[2][i] != '\0') {
-                              //  printf("%c\n", split->stringArray[2][i]);
+                                //  printf("%c\n", split->stringArray[2][i]);
                                 i++;
                                 size++;
                             }
-                           // printf("%d\n", size);
+                            // printf("%d\n", size);
                             symbolTable->symbols[currentSymbol].address = address;
                             address += size;
-                        }
-                        if (split->stringArray[2][0] == 'X') {
+                        } else if (split->stringArray[2][0] == 'X') {
                             int i = 2;
                             int size = 0;
                             while (split->stringArray[2][i] != '\'' && split->stringArray[2][i] != '\0') {
@@ -78,6 +77,11 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             }
                             symbolTable->symbols[currentSymbol].address = address;
                             address += size / 2;
+                        } else {
+                            freeSplit(split);
+                            freeSymbolTable(symbolTable);
+                            fprintf(stderr, "Line %d contains invalid BYTE constant\r\n", lineNumber);
+                            return NULL;
                         }
                     } else if (!strcmp(split->stringArray[1], "RESW")) {
                         symbolTable->symbols[currentSymbol].address = address;

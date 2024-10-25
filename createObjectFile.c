@@ -13,7 +13,7 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile
     struct symbolTable *table = symbolTable;
 
     // Put in H record
-    sprintf(buffer, "H%s %05X%05X\n", table->symbols[0].name, table->symbols[0].address, table->symbols[table->numberOfSymbols - 1].address - table->symbols[0].address);
+    sprintf(buffer, "H%-6s%06X%06X\n", table->symbols[0].name, table->symbols[0].address, table->symbols[table->numberOfSymbols - 1].address - table->symbols[0].address);
     int length = strlen(buffer);
     objFile->hRecord = malloc(sizeof(char) * (length + 1));
     strcpy(objFile->hRecord, buffer);
@@ -157,9 +157,8 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile
         }
         lineNumber++;
     }
-    objFile->eRecord = malloc(8);
-    sprintf(objFile->eRecord, "E%05X\n", firstExecInstructionAddress);
-    fclose(assemblyFile);
+    objFile->eRecord = malloc(10);
+    sprintf(objFile->eRecord, "E%06X\n", firstExecInstructionAddress);
     return objFile;
 }
 
@@ -174,7 +173,7 @@ void removeCR(char *str) {
     str[i+1] = '\0';
 }
 
-void addTRecord(objectFile* objFile, int address, const char *objcode) {
+void addTRecord(objectFile* objFile, int address, char *objcode) {
     int objCodeLength = strlen(objcode) / 2;
     char *tmpBuffer = malloc(80);
     sprintf(tmpBuffer, "T%06X%02X%s\r\n", address, objCodeLength, objcode);
@@ -183,6 +182,7 @@ void addTRecord(objectFile* objFile, int address, const char *objcode) {
     strcpy(objFile->tRecords->stringArray[objFile->tRecords->numStrings], tmpBuffer);
     free(tmpBuffer);
     objFile->tRecords->numStrings++;
+    objcode[0] = '\0';
 }
 
 void addMRecord(objectFile* objFile, int address, int startAddress, const char *name) {

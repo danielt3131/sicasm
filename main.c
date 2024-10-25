@@ -1,6 +1,7 @@
 /**
  * @author Daniel J. Thompson (N01568044)
  */
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,9 +10,16 @@
 #include "freeObjectFile.h"
 
 int main(int argc, char **argv) {
-
-    if (!(argc < 4 && argc > 1)) {
+    if (!(argc < 5 && argc > 1)) {
         printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
+        FILE *pipe = popen("pwd", "r");
+        char buffer[100];
+        fgets(buffer, 100, pipe);
+        fclose(pipe);
+        buffer[strlen(buffer) - 1] = '\0'; // Remove LF
+        printf("CLI arguments:\n--pass1only will only print the symbol table of the assembly file\n"
+               "-o will save the object file to the specified location instead of %s/example.sic.obj\n"
+               "-p will print the contents of the object file to stdout and will not create a file (used for pipes and redirection)\n", buffer);
         return (EXIT_FAILURE);
     }
     //FILE *sourceFile = fopen("copymystring.sic", "r");
@@ -24,7 +32,6 @@ int main(int argc, char **argv) {
      * @brief Pass 1
      */
     struct symbolTable *symbolTable = createSymbolTable(sourceFile);
-    fclose(sourceFile);
     if (symbolTable == NULL) {
         return EXIT_FAILURE;
     }
@@ -36,22 +43,46 @@ int main(int argc, char **argv) {
             printf("%s \t %X\n", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
         }
         freeSymbolTable(symbolTable);
+        fclose(sourceFile);
         return EXIT_SUCCESS;
     }
-    sourceFile = fopen(argv[1], "r");
+    // Rewinds the file pointer back to the beginning of the file
+    rewind(sourceFile);
     /**
      * Pass 2
      */
     objectFile *objFile = createObjectFile(symbolTable, sourceFile);
-    
+    fclose(sourceFile);
     if (objFile == NULL) {
         return EXIT_FAILURE;
-    } 
+    }
 
-    char *outputFilename = malloc(strlen(argv[1]) + 8);
-    strcpy(outputFilename, argv[1]);
-    strcat(outputFilename, ".obj");
-    FILE *outputFile = fopen(outputFilename, "w");
+    char *outputFilename;
+    bool savePath = false;
+    if (argc > 2 && !strcmp(argv[2], "-o")) {
+        outputFilename = argv[3];
+        savePath = true;
+    } else {
+        outputFilename = malloc(strlen(argv[1]) + 8);
+        strcpy(outputFilename, argv[1]);
+        strcat(outputFilename, ".obj");
+    }
+    bool printMode = false;
+    FILE *outputFile;
+    if (argc > 2 && !strcmp("-p", argv[2])) {
+        outputFile = stdout;
+        printMode = true;
+    } else {
+        outputFile = fopen(outputFilename, "w");
+    }
+    if (outputFile == NULL) {
+    fprintf(stderr, "Unable to write to %s\n", outputFilename);
+    fprintf(stderr, "You can either run me as root, fix the file permissions at %s, or run with -p to print the object file to stdout and you handle the pipe redirection\n", outputFilename);
+    free(outputFilename);
+        freeSymbolTable(symbolTable);
+        freeObjectFile(objFile);
+        return EXIT_FAILURE;
+    }
     fprintf(outputFile, "%s", objFile->hRecord);
     for (int i = 0; i < objFile->tRecords->numStrings; i++) {
         fprintf(outputFile, "%s", objFile->tRecords->stringArray[i]);
@@ -60,8 +91,12 @@ int main(int argc, char **argv) {
     for (int i = 0; i < objFile->mRecords->numStrings; i++) {
         fprintf(outputFile, "%s", objFile->mRecords->stringArray[i]);
     }
-    fclose(outputFile);
-    free(outputFilename);
+    if (!printMode) {
+        fclose(outputFile);
+    }
+    if (!savePath) {
+        free(outputFilename);
+    }
     freeObjectFile(objFile);
     freeSymbolTable(symbolTable);
 }
