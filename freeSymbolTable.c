@@ -9,5 +9,5 @@ void freeSymbolTable(struct symbolTable *symbolTable) {
         free(symbolTable->symbols[i].name);
     }
     free(symbolTable->symbols);
-    free (symbolTable);
+    free(symbolTable);
 }
