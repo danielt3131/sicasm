@@ -31,6 +31,7 @@ bool isValidSymbol(char *currentSymbol, struct symbolTable* table, int lineNumbe
     if (table->numberOfSymbols == 0) {
         return true;
     }
+    //printf("%d | %s\n", table->numberOfSymbols, currentSymbol);
     for (int i = 0; i < table->numberOfSymbols; i++) {
         if(!strcmp(currentSymbol, table->symbols[i].name)) {
             fprintf(stderr, "Line %d symbol %s isn't valid because the symbol was already declared at Line %d\r\n", lineNumber, currentSymbol, table->symbols[i].lineNumber);
@@ -72,9 +73,15 @@ bool containsValidCharacters(char *string) {
     return true; 
 }
 const char *directives[] = {"START","END","BYTE","WORD","RESB","RESW","RESR","EXPORTS"};
+/**
+ * @brief Opcodes names & values in hexadecimal
+  */
 const char *opcodes[] = {"ADD","ADDF","ADDR","AND","CLEAR","COMP","COMPF","COMPR","DIV","DIVF","DIVR","FIX","FLOAT",
 "HIO","J","JEQ","JGT","JLT","JSUB","LDA","LDB","LDCH","LDF","LDL","LDS","LDT","LDX","LPS","MUL","MULF","MULR","NORM","OR",
 "RD","RMO","RSUB","SHIFTL","SHIFTR","SIO","SSK","STA","STB","STCH","STF","STI","STL","STS","STSW","STT","STX","SUB","SUBF","SUBR","SVC","TD","TIO","TIX","TIXR","WD"};
+const int opcodesValue[] = {0x18, 0x58, 0x90, 0x40, 0xB4, 0x28, 0x88, 0xA0, 0x24, 0x64, 0x9C, 0xC4, 0xC0, 0xF4, 0x3C, 0x30, 0x34, 0x38, 0x48, 0x00, 0x68, 0x50, 
+0x70, 0x08, 0x6C, 0x74, 0x04, 0xD0, 0x20, 0x60, 0x98, 0xC8, 0x44, 0xD8, 0xAC, 0x4C, 0xA4, 0xA8, 0xF0, 0xEC, 0x0C, 0x78, 0x54, 0x80, 0xD4, 0x14, 0x7C, 0xE8, 0x84, 0x10, 
+0x1C, 0x5C, 0x94, 0xB0, 0xE0, 0xF8, 0x2C, 0xB8, 0xDC};
 bool isDirective(char *directive) {
     for (int i = 0; i < NUMBER_OF_DIRECTIVES; i++) {
         if(!strcmp(directive, directives[i])) {
@@ -86,7 +93,7 @@ bool isDirective(char *directive) {
 
 bool isOpcode(char *opcode){
     // check aganist list of opcodes
-    for (int i = 0; i < NUMBER_OF_DIRECTIVES; i++) {
+    for (int i = 0; i < NUMBER_OF_OPCODES; i++) {
         if(!strcmp(opcode, opcodes[i])) {
             return true;
         }
@@ -104,3 +111,13 @@ bool isValidOperand(char **operand, char *instruction){
     return false;
 }
 */
+
+int getOpcodeValue(const char *opcode) {
+    for (int i = 0; i < NUMBER_OF_OPCODES; i++) {
+        if (!strcmp(opcode, opcodes[i])) {
+            //printf("%x", opcodesValue[i]);
+            return opcodesValue[i];
+        }
+    }
+    return OBJCODE_ERROR;
+}

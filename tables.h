@@ -4,6 +4,7 @@
 #ifndef TABLES_H
 #define TABLES_H
 #include <stdio.h>
+#include <stdbool.h>
 /*
 typedef struct {
     char *instruction;
@@ -11,6 +12,7 @@ typedef struct {
     char *operands[2];
 } instruction;
 */
+
 
 typedef struct {
     char *name;
@@ -33,7 +35,16 @@ struct stringArray {
     int allocatedAmount;
 };
 
+typedef struct {
+    char *hRecord;
+    struct stringArray* tRecords;
+    char *eRecord;
+    struct stringArray* mRecords;
+} objectFile;
+
+
 struct stringArray* stringSplit(char *string, char *delim);
 void freeSymbolTable(struct symbolTable*);
 struct symbolTable* createSymbolTable(FILE *file);
+void freeSplit(struct stringArray *split);
 #endif

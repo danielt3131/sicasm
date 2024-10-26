@@ -55,20 +55,20 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             int i = 2;
                             int size = 0;
                             while (split->stringArray[2][i] != '\'' && split->stringArray[2][i] != '\0') {
-                              //  printf("%c\n", split->stringArray[2][i]);
+                                //  printf("%c\n", split->stringArray[2][i]);
                                 i++;
                                 size++;
                             }
-                           // printf("%d\n", size);
+                            // printf("%d\n", size);
                             symbolTable->symbols[currentSymbol].address = address;
                             address += size;
-                        }
-                        if (split->stringArray[2][0] == 'X') {
+                        } else if (split->stringArray[2][0] == 'X') {
                             int i = 2;
                             int size = 0;
                             while (split->stringArray[2][i] != '\'' && split->stringArray[2][i] != '\0') {
                                 if (!(isdigit(split->stringArray[2][i]) || (split->stringArray[2][i] >='A' &&  split->stringArray[2][i] <= 'F'))) {
                                     freeSplit(split);
+                                    free(symbolTable->symbols[currentSymbol].name);
                                     freeSymbolTable(symbolTable);
                                     fprintf(stderr, "Line %d contains invalid hexadecimal\r\n", lineNumber);
                                     return NULL;
@@ -78,6 +78,12 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             }
                             symbolTable->symbols[currentSymbol].address = address;
                             address += size / 2;
+                        } else {
+                            freeSplit(split);
+                            free(symbolTable->symbols[currentSymbol].name);
+                            freeSymbolTable(symbolTable);
+                            fprintf(stderr, "Line %d contains invalid BYTE constant\r\n", lineNumber);
+                            return NULL;
                         }
                     } else if (!strcmp(split->stringArray[1], "RESW")) {
                         symbolTable->symbols[currentSymbol].address = address;
@@ -88,6 +94,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             address += 3;
                         } else {
                             fprintf(stderr, "Line %d word constant exceeds 24 bits\r\n", lineNumber);
+                            free(symbolTable->symbols[currentSymbol].name);
                             freeSplit(split);
                             freeSymbolTable(symbolTable);
                             return NULL;
@@ -101,6 +108,12 @@ struct symbolTable* createSymbolTable(FILE *file) {
                     }
                     currentSymbol++;
                     symbolTable->numberOfSymbols++;
+                    if (!seenStart) {
+                        freeSymbolTable(symbolTable);
+                        freeSplit(split);
+                        fprintf(stderr, "Start directive not found\r\n");
+                        return NULL;
+                    }
                 } else {
                     //fprintf(stderr, "Line %d symbol %s isn't valid\r\n", lineNumber, split->stringArray[0]);
                     freeSplit(split);
@@ -121,36 +134,9 @@ struct symbolTable* createSymbolTable(FILE *file) {
         //printf("%s \t %X\n", currentLine, address);
         lineNumber++;
     }
-    
+    symbolTable->allocatedAmount = symbolTable->numberOfSymbols;
+    symbolTable->symbols = realloc(symbolTable->symbols, sizeof(symbol) * symbolTable->allocatedAmount);
     return symbolTable;
 }
 
-struct stringArray* stringSplit(char *string, char *delim) {
-    struct stringArray *split = malloc(sizeof(struct stringArray));
-    split->allocatedAmount = 4;
-    split->numStrings = 0;
-    split->stringArray = malloc(sizeof(char *) * split->allocatedAmount);
-    char *splitTemp = strtok(string, delim);
-    while (splitTemp != NULL) {
-        if (splitTemp[0] == '#' || splitTemp[0] == '\n') {
-            break;
-        }
-        if (split->numStrings > split->allocatedAmount) {
-            split->allocatedAmount = split->allocatedAmount * 2;
-            split->stringArray = realloc(split->stringArray, split->allocatedAmount);
-        }
-        split->stringArray[split->numStrings] = malloc(strlen(splitTemp) + 1);
-        strcpy(split->stringArray[split->numStrings], splitTemp);
-        splitTemp = strtok(NULL, delim);
-        split->numStrings++;
-    }
-    return split;
-}
 
-void freeSplit(struct stringArray *split) {
-    for (int i = 0; i < split->numStrings; i++) {
-        free(split->stringArray[i]);
-    }
-    free(split->stringArray);
-    free(split);
-}
