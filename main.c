@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "tables.h"
 #include "createObjectFile.h"
 #include "freeObjectFile.h"
@@ -20,7 +21,7 @@ int main(int argc, char **argv) {
     if (argc == 2) {
         if (!strcmp("-h", argv[1])) {
             printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
-            printHelpMenu(argv[0]);
+            printHelpMenu();
             return EXIT_SUCCESS;
         }
         if (!strcmp("-v", argv[1])) {
@@ -31,7 +32,13 @@ int main(int argc, char **argv) {
     //FILE *sourceFile = fopen("copymystring.sic", "r");
     FILE *sourceFile = fopen(argv[1], "r");
     if (sourceFile == NULL) {
-        printf("The file %s does not exist or insufficient permissions to read in %s\n", argv[1], argv[1]);
+        if (!access(argv[1], F_OK)) {
+            fprintf(stderr, "The user %s lacks read permissions for %s\n", getlogin(), argv[1]);
+            //fprintf(stderr, "The file %s has insufficient read permissions\nMake sure that user %s has read permissions for %s\n", argv[1], getlogin(), argv[1]);
+        } else {
+            fprintf(stderr, "The file %s does not exist\n", argv[1]);
+        }
+        //printf("The file %s does not exist or insufficient permissions to read in %s\n", argv[1], argv[1]);
         return EXIT_FAILURE;
     }
     /**
@@ -84,7 +91,7 @@ int main(int argc, char **argv) {
     }
     if (outputFile == NULL) {
     fprintf(stderr, "Unable to write to %s\n", outputFilename);
-    fprintf(stderr, "You can either run me as root, fix the file permissions at %s, or run with -p to print the object file to stdout and you handle the pipe redirection\n", outputFilename);
+    fprintf(stderr, "You can either run me as root, fix the file permissions at %s for user %s, or run with -p to print the object file to stdout and you handle the pipe redirection\n", outputFilename, getlogin());
     free(outputFilename);
         freeSymbolTable(symbolTable);
         freeObjectFile(objFile);
@@ -110,13 +117,17 @@ int main(int argc, char **argv) {
 
 void printHelpMenu() {
     // Opens up a pipe to get the output of pwd (print working directory)
+    /*
     FILE *pipe = popen("pwd", "r");
     char buffer[200];
     fgets(buffer, 200, pipe);
     fclose(pipe);
     buffer[strlen(buffer) - 1] = '\0'; // Remove LF
+    */
+    char *workingDirectory = getcwd(NULL, 0);
     printf("CLI arguments:\n\t--pass1only will only print the symbol table of the assembly file\n"
            "\t-o will save the object file to the specified location instead of %s/example.sic.obj\n"
            "\t-p will print the contents of the object file to stdout and will not create a file (used for pipes and redirection)\n"
-           "\t-v displays version info\n\t-h display this help menu\n", buffer);
+           "\t-v displays version info\n\t-h display this help menu\n", workingDirectory);
+    free(workingDirectory);
 }
