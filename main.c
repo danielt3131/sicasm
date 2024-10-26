@@ -32,7 +32,8 @@ int main(int argc, char **argv) {
     //FILE *sourceFile = fopen("copymystring.sic", "r");
     FILE *sourceFile = fopen(argv[1], "r");
     if (sourceFile == NULL) {
-        if (!access(argv[1], F_OK)) {
+        // Tests for read permissions
+        if (access(argv[1], R_OK)) {
             fprintf(stderr, "The user %s lacks read permissions for %s\n", getlogin(), argv[1]);
             //fprintf(stderr, "The file %s has insufficient read permissions\nMake sure that user %s has read permissions for %s\n", argv[1], getlogin(), argv[1]);
         } else {
@@ -116,14 +117,10 @@ int main(int argc, char **argv) {
 }
 
 void printHelpMenu() {
-    // Opens up a pipe to get the output of pwd (print working directory)
-    /*
-    FILE *pipe = popen("pwd", "r");
-    char buffer[200];
-    fgets(buffer, 200, pipe);
-    fclose(pipe);
-    buffer[strlen(buffer) - 1] = '\0'; // Remove LF
-    */
+    /**
+     * Get the current working directory from getcwd syscall
+     * The arguments NULL and 0 are there to have the function wrapper for the syscall to automatically allocate the nesscarry amount of memory
+     */
     char *workingDirectory = getcwd(NULL, 0);
     printf("CLI arguments:\n\t--pass1only will only print the symbol table of the assembly file\n"
            "\t-o will save the object file to the specified location instead of %s/example.sic.obj\n"

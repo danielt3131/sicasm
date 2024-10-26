@@ -1,0 +1,42 @@
+SIC assembler pass 1 & 2 by Daniel J. Thompson (N01568044)
+Assembly instructions must be separated by a tab character as spaces are not supported and a line of more than 999 characters will not be read in properly as the buffer is for 1000 characters including the null byte
+Error messages are sent to the standard error stream (stderr).
+The main function opens up a file stream based on the first command line argument then it passes the file pointer to the function createSymbolTable then rewinds the file pointer before passing it and the symbol table to createObjectFile to create the objectFile
+If there is an issue of opening up the file from the first command line argument, my assembler will detect the following errors:
+    1. If the file does not exist
+    2. If the user does not have read permissions for the file by using the POSIX syscall access
+Symbol Table:
+    The function createSymbolTable will either return a pointer to a structure called symbolTable or NULL if an error has occurred while creating the symbol table.
+    In the createSymbolTable function after reading in a line, the line is split into indivdual tokens stored in an array of character pointers that is inside of a structure called stringArray, for easy lookup when creating the symbol table.
+    The struct symbolTable contains the following, an integer for the number of symbols, an integer for how many symbols can be stored (allocation amount), and a pointer to an array of symbol structures.
+    The symbol structure contains the following, an integer to store the memory address, an integer to store the linenumber (for error messages), and a character pointer to store the name of the symbol.
+
+Object File:
+The contents of the object file are saved in a struct called objectFile which contains the following:
+    2 char * for the H record and E record
+    2 struct stringArray* for the T records and the M records
+The object file is created in createObjectFile.c and the object code is created in objectcodeCreate.c.  The objectcodeCreate function takes in 4 arguments the opcode, address, the symbolTable and the address mode.
+In the objectcodeCreate function the opcode and address are retrieved from the lookup table in checker.c and from the symbol table.  The values of each the opcode and address are saved in hex formatted strings to be concatenated together.
+The resulting hex string is converted back into an integer for the address mode bit set.
+
+The memory required for my assembler implementation is less than /usr/bin/sicasm by the tool massif from valgrind.
+In addition, my assembler implementation throws no errors when ran with valgrind for all test files, and all memory that is allocated is freed when the program exits either normally or when an error occurs ie no memory leaks.
+The assembler supports the following cli arguments:
+    --pass1only will only print the symbol table of the file to stdout
+    -o will save the object file to the provided path -> ./project2 example.sic -o sic.obj will save the object file as sic.obj in the current working directory.
+    -p will print the contents of the object file to stdout and will not create a file (used for pipes and redirection)
+    -h will print the help menu with info for all command line arguments
+    -v will print the current version of the assembler
+If no command line arguments are passed to the assembler then the following is displayed to the user:
+    USAGE: ./project2 <filename, - where filename is a SIC Assembly File
+    Run ./project2 -h for more info
+If the file is unable to be written the program will tell the user to either fix the permissions issue, grant elevated privileges, or run with -p to print to stdout for redirection for the next run
+The assembler is able to detect the error including but not limited to:
+    1. Blank lines ie (CRLF / LF)
+    2. Symbols that were declared twice
+    3. Symbols that don't meet the specification of what is a valid symbol
+    4. Symbol name that matches a directive or an opcode
+    5. Invalid Hex constant
+    6. Invalid BYTE constant
+    7. Programs that exceed the available memory of the SIC
+My assembly implementation meets all the requirements including combining the text records along with additional command line options that can be used in a build script.
