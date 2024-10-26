@@ -10,6 +10,7 @@ int objcodeCreate(const char *opcode, bool addressMode, const char *symbolName, 
 int retrieveAddress(struct symbolTable* table, const char *symbolName);
 void removeCR(char *str);
 objectFile* createObjectFile(struct symbolTable *table, FILE *assemblyFile);
-void addTRecord(objectFile* objFile, int address, char *objcode);
+void addTRecord(objectFile* objFile, int address, char *objcode, int *startingAddress, char *tRecordBuffer, bool combine);
+void printTRecord(objectFile *objFile, int address, char *objcode);
 void addMRecord(objectFile* objFile, int address, int startAddress, const char *name);
 #endif

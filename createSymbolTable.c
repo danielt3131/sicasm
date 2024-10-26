@@ -68,6 +68,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             while (split->stringArray[2][i] != '\'' && split->stringArray[2][i] != '\0') {
                                 if (!(isdigit(split->stringArray[2][i]) || (split->stringArray[2][i] >='A' &&  split->stringArray[2][i] <= 'F'))) {
                                     freeSplit(split);
+                                    free(symbolTable->symbols[currentSymbol].name);
                                     freeSymbolTable(symbolTable);
                                     fprintf(stderr, "Line %d contains invalid hexadecimal\r\n", lineNumber);
                                     return NULL;
@@ -79,6 +80,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             address += size / 2;
                         } else {
                             freeSplit(split);
+                            free(symbolTable->symbols[currentSymbol].name);
                             freeSymbolTable(symbolTable);
                             fprintf(stderr, "Line %d contains invalid BYTE constant\r\n", lineNumber);
                             return NULL;
@@ -92,6 +94,7 @@ struct symbolTable* createSymbolTable(FILE *file) {
                             address += 3;
                         } else {
                             fprintf(stderr, "Line %d word constant exceeds 24 bits\r\n", lineNumber);
+                            free(symbolTable->symbols[currentSymbol].name);
                             freeSplit(split);
                             freeSymbolTable(symbolTable);
                             return NULL;

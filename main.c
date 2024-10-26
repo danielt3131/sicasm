@@ -1,7 +1,6 @@
 /**
  * @author Daniel J. Thompson (N01568044)
  */
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,23 +8,30 @@
 #include "createObjectFile.h"
 #include "freeObjectFile.h"
 
+void printHelpMenu();
 int main(int argc, char **argv) {
     if (!(argc < 5 && argc > 1)) {
         printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
-        FILE *pipe = popen("pwd", "r");
-        char buffer[100];
-        fgets(buffer, 100, pipe);
-        fclose(pipe);
-        buffer[strlen(buffer) - 1] = '\0'; // Remove LF
-        printf("CLI arguments:\n--pass1only will only print the symbol table of the assembly file\n"
-               "-o will save the object file to the specified location instead of %s/example.sic.obj\n"
-               "-p will print the contents of the object file to stdout and will not create a file (used for pipes and redirection)\n", buffer);
+        printf("Run %s -h for more info\n", argv[0]);
         return (EXIT_FAILURE);
+    }
+
+    // Prints help menu
+    if (argc == 2) {
+        if (!strcmp("-h", argv[1])) {
+            printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
+            printHelpMenu(argv[0]);
+            return EXIT_SUCCESS;
+        }
+        if (!strcmp("-v", argv[1])) {
+            printf("Version 1.0 by Daniel J. Thompson\n");
+            return EXIT_SUCCESS;
+        }
     }
     //FILE *sourceFile = fopen("copymystring.sic", "r");
     FILE *sourceFile = fopen(argv[1], "r");
     if (sourceFile == NULL) {
-        printf("The file %s does not exist\n", argv[1]);
+        printf("The file %s does not exist or insufficient permissions to read in %s\n", argv[1], argv[1]);
         return EXIT_FAILURE;
     }
     /**
@@ -33,6 +39,7 @@ int main(int argc, char **argv) {
      */
     struct symbolTable *symbolTable = createSymbolTable(sourceFile);
     if (symbolTable == NULL) {
+        fclose(sourceFile);
         return EXIT_FAILURE;
     }
     /**
@@ -99,4 +106,17 @@ int main(int argc, char **argv) {
     }
     freeObjectFile(objFile);
     freeSymbolTable(symbolTable);
+}
+
+void printHelpMenu() {
+    // Opens up a pipe to get the output of pwd (print working directory)
+    FILE *pipe = popen("pwd", "r");
+    char buffer[200];
+    fgets(buffer, 200, pipe);
+    fclose(pipe);
+    buffer[strlen(buffer) - 1] = '\0'; // Remove LF
+    printf("CLI arguments:\n\t--pass1only will only print the symbol table of the assembly file\n"
+           "\t-o will save the object file to the specified location instead of %s/example.sic.obj\n"
+           "\t-p will print the contents of the object file to stdout and will not create a file (used for pipes and redirection)\n"
+           "\t-v displays version info\n\t-h display this help menu\n", buffer);
 }

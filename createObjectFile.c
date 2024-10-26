@@ -9,6 +9,9 @@
 objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile) {
     char currentLine[1000];
     char buffer[100];
+    char tRecordBuffer[61];
+    tRecordBuffer[0] = '\0';
+    int tRecordAddress = 0;
     objectFile* objFile = malloc(sizeof(objectFile)); 
     struct symbolTable *table = symbolTable;
 
@@ -36,7 +39,7 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile
     objFile->mRecords->allocatedAmount = 5;
     objFile->mRecords->numStrings = 0;
     objFile->mRecords->stringArray = malloc(objFile->mRecords->allocatedAmount * sizeof(char *));
-
+    objFile->eRecord = malloc(10);
     int symbolIndex = 1;
     int lineNumber = table->symbols[0].lineNumber + 1;
     bool firstExecInstruction = false;
@@ -62,12 +65,12 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile
                     if (!strcmp(split->stringArray[1], "WORD")) {
                         int value = atoi(split->stringArray[2]);
                         sprintf(buffer, "%06X", value);
-                        addTRecord(objFile, address, buffer);
+                        addTRecord(objFile, address, buffer, &tRecordAddress, tRecordBuffer, true);
                     } else if (!strcmp(split->stringArray[1], "BYTE") && split->stringArray[2][0] == 'C') {
                         int i = 2;
                         char tmpBuffer[4];
                         int stringLength = strlen(split->stringArray[2]);
-                        char *byteBuffer = malloc(2 * stringLength + 1);
+                        char *byteBuffer = malloc(2 * stringLength + 2);
                         memset(byteBuffer, 0, (2 * stringLength + 1));
                         while (split->stringArray[2][i] != '\'') {
                             sprintf(tmpBuffer, "%02X", split->stringArray[2][i]);
@@ -83,10 +86,17 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile
                             
                             substrPos += 60;
                             substr[60] = '\0';
-                            addTRecord(objFile, address, substr);
+                            addTRecord(objFile, address, substr, &tRecordAddress, tRecordBuffer, false);
                             address += 30;
                         }
-                        addTRecord(objFile, address, substrPos);
+
+                        if (strlen(tRecordBuffer) == 0) {
+                            addTRecord(objFile, address, substrPos, &tRecordAddress, tRecordBuffer, false);
+                        } else {
+                            addTRecord(objFile, address, substrPos, &tRecordAddress, tRecordBuffer, true);
+                        }
+
+                        //addTRecord(objFile, address, substrPos, &tRecordAddress, tRecordBuffer, false);
                         free(byteBuffer);
                     } else if (!strcmp(split->stringArray[1], "BYTE") && split->stringArray[2][0] == 'X') {
                         int i = 2;
@@ -96,10 +106,21 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile
                             strcat(buffer, tmpBuffer);
                             i++;
                         }
-                        addTRecord(objFile, address, buffer);
+                        addTRecord(objFile, address, buffer, &tRecordAddress, tRecordBuffer, true);
                     } else if (!strcmp(split->stringArray[1], "END")) {
+                        if (retrieveAddress(table, split->stringArray[2]) == OBJCODE_ERROR) {
+                            fprintf(stderr, "Error %s is not a valid instruction for END directive at line: %d\r\n", split->stringArray[2], lineNumber);
+                            freeSplit(split);
+                            freeSymbolTable(table);
+                            freeObjectFile(objFile);
+                            return NULL;
+                        }
                         freeSplit(split);
                         break;
+                    } else {
+                        if (strlen(tRecordBuffer) != 0) {
+                            printTRecord(objFile, tRecordAddress, tRecordBuffer);
+                        }
                     }
                 } else {
                     if (!firstExecInstruction) {
@@ -115,7 +136,7 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile
                         return NULL;
                     }
                     sprintf(buffer, "%06X", objCode);
-                    addTRecord(objFile, address, buffer);
+                    addTRecord(objFile, address, buffer, &tRecordAddress, tRecordBuffer, true);
                     addMRecord(objFile, address + 1, table->symbols[0].address, table->symbols[0].name);
                 }
                 freeSplit(split);
@@ -135,7 +156,7 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile
                 
                 } else {
                     if (!strcmp("RSUB", split->stringArray[0])) {
-                        sprintf(buffer, "6C0000");
+                        sprintf(buffer, "4C0000");
                     } else {
                         objCode = objcodeCreate(split->stringArray[0], false, split->stringArray[1], table, lineNumber);
                         if (objCode == OBJCODE_ERROR) {
@@ -151,17 +172,23 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, FILE *assemblyFile
                 }
                 freeSplit(split);
                 address += 3;
-                addTRecord(objFile, address, buffer);
+                addTRecord(objFile, address, buffer, &tRecordAddress, tRecordBuffer, true);
 
             }
         }
         lineNumber++;
     }
-    objFile->eRecord = malloc(10);
-    sprintf(objFile->eRecord, "E%06X\n", firstExecInstructionAddress);
+    sprintf(objFile->eRecord,  "E%06X\n", firstExecInstructionAddress);
+    if (strlen(tRecordBuffer) != 0) {
+        printTRecord(objFile, tRecordAddress, tRecordBuffer);
+    }
     return objFile;
 }
 
+/**
+ * Removes carriage return CR / 0x1D / 13 from a string
+ * @param str The string to remove the carriage return
+ */
 void removeCR(char *str) {
     int length = strlen(str);
     int i;
@@ -173,10 +200,33 @@ void removeCR(char *str) {
     str[i+1] = '\0';
 }
 
-void addTRecord(objectFile* objFile, int address, char *objcode) {
+void addTRecord(objectFile* objFile, int address, char *objcode, int *startingAddress, char *tRecordBuffer, bool combine) {
+    int length = strlen(tRecordBuffer);
+    if (combine) {
+        if (length == 0) {
+            (*startingAddress) = address;
+        }
+        if (length + strlen(objcode) > 60) {
+            printTRecord(objFile, *startingAddress, tRecordBuffer);
+            *startingAddress = address;
+        }
+        strcat(tRecordBuffer, objcode);
+        objcode[0] = '\0';
+    } else {
+        if (length != 0) {
+            printTRecord(objFile, *startingAddress, tRecordBuffer);
+        }
+        printTRecord(objFile, address, objcode);
+    }
+}
+void printTRecord(objectFile *objFile, int address, char *objcode) {
     int objCodeLength = strlen(objcode) / 2;
-    char *tmpBuffer = malloc(80);
+    char *tmpBuffer = malloc(100);
     sprintf(tmpBuffer, "T%06X%02X%s\r\n", address, objCodeLength, objcode);
+    if (objFile->tRecords->numStrings >= objFile->tRecords->allocatedAmount) {
+        objFile->tRecords->allocatedAmount *= 2;
+        objFile->tRecords->stringArray = realloc(objFile->tRecords->stringArray, objFile->tRecords->allocatedAmount * sizeof(struct stringArray));
+    }
     objFile->tRecords->stringArray[objFile->tRecords->numStrings] = malloc((strlen(tmpBuffer) + 1) * sizeof(char));
     //printf("%s", tmpBuffer);
     strcpy(objFile->tRecords->stringArray[objFile->tRecords->numStrings], tmpBuffer);
@@ -184,7 +234,6 @@ void addTRecord(objectFile* objFile, int address, char *objcode) {
     objFile->tRecords->numStrings++;
     objcode[0] = '\0';
 }
-
 void addMRecord(objectFile* objFile, int address, int startAddress, const char *name) {
     char mBuffer[16];
     if (address > startAddress) {
