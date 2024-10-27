@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     /**
      * Pass 1 only option
      */
-    if (argc == 3 && strcmp(argv[2], "--pass1only") == 0) {
+    if (argc < 4 && !strcmp(argv[argc - 1], "--pass1only")) {
         for (int i = 0; i < symbolTable->numberOfSymbols; i++) {
             printf("%s \t %X\n", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
         }
