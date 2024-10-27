@@ -3,11 +3,13 @@
 #include <string.h>
 
 struct stringArray* stringSplit(char *string, char *delim) {
+    char *stringCopy = malloc(strlen(string) + 1);
+    strcpy(stringCopy, string);
     struct stringArray *split = malloc(sizeof(struct stringArray));
     split->allocatedAmount = 4;
     split->numStrings = 0;
     split->stringArray = malloc(sizeof(char *) * split->allocatedAmount);
-    char *splitTemp = strtok(string, delim);
+    char *splitTemp = strtok(stringCopy, delim);
     while (splitTemp != NULL) {
         if (splitTemp[0] == '#' || splitTemp[0] == '\n') {
             break;
@@ -21,6 +23,7 @@ struct stringArray* stringSplit(char *string, char *delim) {
         splitTemp = strtok(NULL, delim);
         split->numStrings++;
     }
+    free(stringCopy);
     return split;
 }
 

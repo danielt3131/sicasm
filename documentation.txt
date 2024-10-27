@@ -1,7 +1,8 @@
 SIC assembler pass 1 & 2 by Daniel J. Thompson (N01568044)
 Assembly instructions must be separated by a tab character as spaces are not supported and a line of more than 999 characters will not be read in properly as the buffer is for 1000 characters including the null byte
 Error messages are sent to the standard error stream (stderr).
-The main function opens up a file stream based on the first command line argument then it passes the file pointer to the function createSymbolTable then rewinds the file pointer before passing it and the symbol table to createObjectFile to create the objectFile
+The main function opens up a file stream based on the first command line argument then it passes the file pointer to the function createFileBuffer to read the contents of the file into memory to reduce disk io.
+After createFileBuffer, a fileBuffer pointer is passed to createSymbolTable to create the symbol table then passing the fileBuffer and symbolTable to createObjectFile to create the objectFile
 If there is an issue of opening up the file from the first command line argument, my assembler will detect the following errors:
     1. If the file does not exist
     2. If the user does not have read permissions for the file by using the POSIX syscall access
@@ -27,7 +28,7 @@ The assembler supports the following cli arguments:
     -p will print the contents of the object file to stdout and will not create a file (used for pipes and redirection)
     -h will print the help menu with info for all command line arguments
     -v will print the current version of the assembler
-If no command line arguments are passed to the assembler then the following is displayed to the user:
+If no command line arguments are passed to the assembler then the following is displayed to the user
     USAGE: ./project2 <filename, - where filename is a SIC Assembly File
     Run ./project2 -h for more info
 If the file is unable to be written the program will tell the user to either fix the permissions issue, grant elevated privileges, or run with -p to print to stdout for redirection for the next run
