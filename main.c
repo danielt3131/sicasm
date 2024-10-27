@@ -5,13 +5,31 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include "tables.h"
 #include "createObjectFile.h"
 #include "freeObjectFile.h"
 
 void printHelpMenu();
 int main(int argc, char **argv) {
-    if (!(argc < 5 && argc > 1)) {
+    bool printMode = false;
+    bool isPiped = false;
+    FILE *sourceFile;
+    if (!isatty(STDIN_FILENO)) {
+        sourceFile = tmpfile();
+        if (sourceFile == NULL) {
+            fprintf(stderr, "Error %s: Unable to create tmpfile\n", strerror(errno));
+        }
+        char *buffer = malloc(1000);
+        while(fgets(buffer, 1000, stdin) != NULL) {
+            fprintf(sourceFile, "%s", buffer);
+        }
+        free(buffer);
+        rewind(sourceFile);
+        printMode = true;
+        isPiped = true;
+    }
+    if (!(argc < 5 && argc > 1) && !printMode) {
         printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
         printf("Run %s -h for more info\n", argv[0]);
         return (EXIT_FAILURE);
@@ -28,19 +46,8 @@ int main(int argc, char **argv) {
             return EXIT_SUCCESS;
         }
     }
-    FILE *sourceFile;
-    bool printMode = false;
     // Support piping from other processes by reading in stdin to a tmp file.
-    if (!strcmp("-", argv[1])) {
-        sourceFile = tmpfile();
-        char *buffer = malloc(1000);
-        while(fgets(buffer, 1000, stdin) != NULL) {
-            fprintf(sourceFile, "%s", buffer);
-        }
-        free(buffer);
-        rewind(sourceFile);
-        printMode = true;
-    } else {
+    if (!printMode) {
         sourceFile = fopen(argv[1], "r");
     }
     if (sourceFile == NULL) {
@@ -89,7 +96,7 @@ int main(int argc, char **argv) {
     if (argc > 2 && !strcmp(argv[2], "-o")) {
         outputFilename = argv[3];
         savePath = true;
-    } else {
+    } else if (argc > 1) {
         outputFilename = malloc(strlen(argv[1]) + 8);
         strcpy(outputFilename, argv[1]);
         strcat(outputFilename, ".obj");
@@ -102,9 +109,9 @@ int main(int argc, char **argv) {
         outputFile = fopen(outputFilename, "w");
     }
     if (outputFile == NULL) {
-    fprintf(stderr, "Unable to write to %s\n", outputFilename);
-    fprintf(stderr, "You can either run me as root, fix the file permissions at %s for user %s, or run with -p to print the object file to stdout and you handle the pipe redirection\n", outputFilename, getlogin());
-    free(outputFilename);
+        fprintf(stderr, "Unable to write to %s\n", outputFilename);
+        fprintf(stderr, "You can either run me as root, fix the file permissions at %s for user %s, or run with -p to print the object file to stdout and you handle the pipe redirection\n", outputFilename, getlogin());
+        free(outputFilename);
         freeSymbolTable(symbolTable);
         freeObjectFile(objFile);
         return EXIT_FAILURE;
@@ -120,7 +127,7 @@ int main(int argc, char **argv) {
     if (!printMode) {
         fclose(outputFile);
     }
-    if (!savePath) {
+    if (!(savePath || isPiped)) {
         free(outputFilename);
     }
     freeObjectFile(objFile);
