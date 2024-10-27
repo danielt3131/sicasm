@@ -16,7 +16,6 @@ int main(int argc, char **argv) {
         printf("Run %s -h for more info\n", argv[0]);
         return (EXIT_FAILURE);
     }
-
     // Prints help menu
     if (argc == 2) {
         if (!strcmp("-h", argv[1])) {
@@ -29,8 +28,21 @@ int main(int argc, char **argv) {
             return EXIT_SUCCESS;
         }
     }
-    //FILE *sourceFile = fopen("copymystring.sic", "r");
-    FILE *sourceFile = fopen(argv[1], "r");
+    FILE *sourceFile;
+    bool printMode = false;
+    // Support piping from other processes by reading in stdin to a tmp file.
+    if (!strcmp("-", argv[1])) {
+        sourceFile = tmpfile();
+        char *buffer = malloc(1000);
+        while(fgets(buffer, 1000, stdin) != NULL) {
+            fprintf(sourceFile, "%s", buffer);
+        }
+        free(buffer);
+        rewind(sourceFile);
+        printMode = true;
+    } else {
+        sourceFile = fopen(argv[1], "r");
+    }
     if (sourceFile == NULL) {
         // Tests for read permissions
         if (access(argv[1], R_OK)) {
@@ -82,9 +94,8 @@ int main(int argc, char **argv) {
         strcpy(outputFilename, argv[1]);
         strcat(outputFilename, ".obj");
     }
-    bool printMode = false;
     FILE *outputFile;
-    if (argc > 2 && !strcmp("-p", argv[2])) {
+    if (printMode || (argc > 2 && !strcmp("-p", argv[2]))) {
         outputFile = stdout;
         printMode = true;
     } else {
