@@ -13,11 +13,11 @@
  * @param fileBuf The file buffer of the assembly file
  * @return The pointer to the symbol table or NULL if there was an error
  */
-struct symbolTable* createSymbolTable(fileBuffer *fileBuf) {
+struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
     char *currentLine;
     struct symbolTable *symbolTable = malloc(sizeof(struct symbolTable));
-    symbolTable->symbols = malloc(5 * sizeof(symbol));
-    symbolTable->allocatedAmount = 5;
+    symbolTable->symbols = malloc(*numSymbols * sizeof(symbol));
+    symbolTable->allocatedAmount = *numSymbols;
     symbolTable->numberOfSymbols = 0;
     int address = 0;
     int currentSymbol = 0;
@@ -33,10 +33,12 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf) {
         }
         lineNumber = fileBuf->lineNumbers[i];
         if (!isspace(currentLine[0])) {
+            /*
             if (currentSymbol >= symbolTable->allocatedAmount) {
                 symbolTable->allocatedAmount = symbolTable->allocatedAmount * 2;
                 symbolTable->symbols = realloc(symbolTable->symbols, sizeof(symbol) * symbolTable->allocatedAmount);
             }
+            */
             struct stringArray *split = stringSplit(currentLine, "\t\n");
             if (isValidSymbol(split->stringArray[0], symbolTable, lineNumber) && split->numStrings >= 2) {
                 symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[0]) + 1);
@@ -133,8 +135,10 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf) {
         //printf("%s \t %X\n", currentLine, address);
         //lineNumber++;
     }
+    /*
     symbolTable->allocatedAmount = symbolTable->numberOfSymbols;
     symbolTable->symbols = realloc(symbolTable->symbols, sizeof(symbol) * symbolTable->allocatedAmount);
+    */
     return symbolTable;
 }
 

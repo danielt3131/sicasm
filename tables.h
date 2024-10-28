@@ -50,7 +50,7 @@ typedef struct {
 
 struct stringArray* stringSplit(char *string, char *delim);
 void freeSymbolTable(struct symbolTable*);
-struct symbolTable* createSymbolTable(fileBuffer *fileBuf);
+struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols);
 //struct symbolTable* createSymbolTable(FILE *file);
 void freeSplit(struct stringArray *split);
 #endif

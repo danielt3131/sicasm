@@ -7,7 +7,7 @@
  * @param sourceFile The file stream to read from
  * @return A file buffer containing all non comment lines
  */
-fileBuffer* createFileBuffer(FILE *sourceFile) {
+fileBuffer* createFileBuffer(FILE *sourceFile, int *numberOfSymbols) {
     fileBuffer *buffer = malloc(sizeof(fileBuffer));
     buffer->allocationAmount = 10;
     buffer->numLines = 0;
@@ -27,6 +27,9 @@ fileBuffer* createFileBuffer(FILE *sourceFile) {
             }
             buffer->lines[buffer->numLines] = malloc(bufferSize + 1);
             strcpy(buffer->lines[buffer->numLines], line);
+            if (buffer->lines[buffer->numLines][0] != '\t') {
+                (*numberOfSymbols)++;
+            }
             if (buffer->lines[buffer->numLines][bufferSize - 2] == '\r') {
                 buffer->lines[buffer->numLines][bufferSize - 2] = '\n';
                 buffer->lines[buffer->numLines][bufferSize - 1] = '\0';

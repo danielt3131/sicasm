@@ -1,5 +1,5 @@
 SIC assembler pass 1 & 2 by Daniel J. Thompson (N01568044)
-Assembly instructions must be separated by a tab character as spaces are not supported and a line of more than 999 characters will not be read in properly as the buffer is for 1000 characters including the null byte
+Assembly instructions must be separated by a tab character as spaces are not supported.  There is no limit to how long a line can be as long as there is sufficient memory
 Error messages are sent to the standard error stream (stderr).
 The main function opens up a file stream based on the first command line argument then it passes the file pointer to the function createFileBuffer to read the contents of the file into memory to reduce disk io.
 After createFileBuffer, a fileBuffer pointer is passed to createSymbolTable to create the symbol table then passing the fileBuffer and symbolTable to createObjectFile to create the objectFile

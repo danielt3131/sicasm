@@ -55,23 +55,23 @@ int main(int argc, char **argv) {
         sourceFile = fopen(argv[1], "r");
     }
     if (sourceFile == NULL) {
-        // Tests for read permissions
-        if (access(argv[1], R_OK)) {
+        // Tests for read permissions by if the file exists
+        if (access(argv[1], F_OK)) {
+            fprintf(stderr, "The file %s does not exist\n", argv[1]);
+        } else {
             fprintf(stderr, "The user %s lacks read permissions for %s\n", getlogin(), argv[1]);
             //fprintf(stderr, "The file %s has insufficient read permissions\nMake sure that user %s has read permissions for %s\n", argv[1], getlogin(), argv[1]);
-        } else {
-            fprintf(stderr, "The file %s does not exist\n", argv[1]);
         }
         //printf("The file %s does not exist or insufficient permissions to read in %s\n", argv[1], argv[1]);
         return EXIT_FAILURE;
     }
     // Create file buffer
-    fileBuffer *buffer = createFileBuffer(sourceFile);
-
+    int numSymbols = 0;
+    fileBuffer *buffer = createFileBuffer(sourceFile, &numSymbols);
     /**
      * @brief Pass 1
      */
-    struct symbolTable *symbolTable = createSymbolTable(buffer);
+    struct symbolTable *symbolTable = createSymbolTable(buffer, &numSymbols);
     if (symbolTable == NULL) {
         freeFileBuffer(buffer);
         //fclose(sourceFile);
