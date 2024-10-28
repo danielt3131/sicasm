@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 CC = gcc
 TARGET = project2
-CFLAGS = -Wall -Wextra -g -O0 -fstack-protector-all
+CFLAGS = -Wall -Wextra -g -O0
 OBJS = main.o createSymbolTable.o checker.o freeSymbolTable.o objcodeCreate.o stringSplit.o createObjectFile.o freeObjectFile.o fileBuffer.o
 all: $(TARGET)
 

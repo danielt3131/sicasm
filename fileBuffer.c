@@ -26,6 +26,7 @@ fileBuffer* createFileBuffer(FILE *sourceFile, int *numberOfSymbols) {
                 buffer->lineNumbers = realloc(buffer->lineNumbers, buffer->allocationAmount * sizeof(int));
             }
             buffer->lines[buffer->numLines] = malloc(bufferSize + 1);
+            replaceWhitespace(line, bufferSize);
             strcpy(buffer->lines[buffer->numLines], line);
             if (buffer->lines[buffer->numLines][0] != '\t') {
                 (*numberOfSymbols)++;
@@ -34,6 +35,7 @@ fileBuffer* createFileBuffer(FILE *sourceFile, int *numberOfSymbols) {
                 buffer->lines[buffer->numLines][bufferSize - 2] = '\n';
                 buffer->lines[buffer->numLines][bufferSize - 1] = '\0';
             }
+
             buffer->lineNumbers[buffer->numLines] = i;
             buffer->numLines++;
         }
@@ -56,4 +58,16 @@ void freeFileBuffer(fileBuffer *buffer) {
     free(buffer->lineNumbers);
     free(buffer->lines);
     free(buffer);
+}
+// Replaces whitespace at the end of a string with tab-> 0x20 ' ' -> 0x09 \t as some files have leading spaces after a symbol name
+void replaceWhitespace(char *str, int size) {
+    int i;
+    for (i = size - 1; i >= 0; i--) {
+        if (str[i] == '\'') {
+            break;
+        }
+        if (str[i] == ' ') {
+            str[i] = '\t';
+        }
+    }
 }

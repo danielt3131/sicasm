@@ -4,4 +4,5 @@
 #define FILEBUFFER_H
 fileBuffer* createFileBuffer(FILE *sourceFile, int *numberOfSymbols);
 void freeFileBuffer(fileBuffer *buffer);
+void replaceWhitespace(char *str, int size);
 #endif
