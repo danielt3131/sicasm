@@ -50,11 +50,12 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBu
     for (int i = 1; i < fileBuf->numLines; i++) {
         currentLine = fileBuf->lines[i];
         lineNumber = fileBuf->lineNumbers[i];
+        /*
         if (objFile->tRecords->numStrings >= objFile->tRecords->allocatedAmount) {
             objFile->tRecords->allocatedAmount *= 2;
             objFile->tRecords->stringArray = realloc(objFile->tRecords->stringArray, sizeof(char *) * objFile->tRecords->allocatedAmount);
         }
-
+        */
         if (objFile->mRecords->numStrings >= objFile->mRecords->allocatedAmount) {
             objFile->mRecords->allocatedAmount *= 2;
             objFile->mRecords->stringArray = realloc(objFile->mRecords->stringArray, sizeof(char *) * objFile->mRecords->allocatedAmount);
@@ -178,11 +179,15 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBu
             addTRecord(objFile, address, buffer, &tRecordAddress, tRecordBuffer, true);
 
         }
+        free(currentLine);
     }
     sprintf(objFile->eRecord,  "E%06X\n", firstExecInstructionAddress);
     if (strlen(tRecordBuffer) != 0) {
         printTRecord(objFile, tRecordAddress, tRecordBuffer);
     }
+    free(fileBuf->lineNumbers);
+    free(fileBuf->lines);
+    free(fileBuf); 
     return objFile;
 }
 
