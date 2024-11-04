@@ -179,15 +179,11 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBu
             addTRecord(objFile, address, buffer, &tRecordAddress, tRecordBuffer, true);
 
         }
-        free(currentLine);
     }
     sprintf(objFile->eRecord,  "E%06X\n", firstExecInstructionAddress);
     if (strlen(tRecordBuffer) != 0) {
         printTRecord(objFile, tRecordAddress, tRecordBuffer);
     }
-    free(fileBuf->lineNumbers);
-    free(fileBuf->lines);
-    free(fileBuf); 
     return objFile;
 }
 

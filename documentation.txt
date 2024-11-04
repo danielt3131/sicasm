@@ -20,7 +20,7 @@ The object file is created in createObjectFile.c and the object code is created 
 In the objectcodeCreate function the opcode and address are retrieved from the lookup table in checker.c and from the symbol table.  The values of each the opcode and address are saved in hex formatted strings to be concatenated together.
 The resulting hex string is converted back into an integer for the address mode bit set.
 
-The memory required for my assembler implementation is less than /usr/bin/sicasm by the tool massif from valgrind.
+The memory required for my assembler implementation is less than /usr/bin/sicasm by the tool massif from valgrind.  The runtime complexity is O(n^2) and the space complexity is O(n).  The amount of memory used while processing is 3 * k where k is the size of the assembly file in bytes
 In addition, my assembler implementation throws no errors when ran with valgrind for all test files, and all memory that is allocated is freed when the program exits either normally or when an error occurs ie no memory leaks.
 The assembler supports the following cli arguments:
     --pass1only will only print the symbol table of the file to stdout
@@ -40,4 +40,4 @@ The assembler is able to detect the error including but not limited to:
     5. Invalid Hex constant
     6. Invalid BYTE constant
     7. Programs that exceed the available memory of the SIC
-My assembly implementation meets all the requirements including combining the text records along with additional command line options that can be used in a build script.
+My assembly implementation meets all the requirements including combining the text records along with additional command line options that can be used in a build script.	

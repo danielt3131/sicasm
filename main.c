@@ -95,10 +95,10 @@ int main(int argc, char **argv) {
      * Pass 2
      */
     objectFile *objFile = createObjectFile(symbolTable, buffer);
-    //freeFileBuffer(buffer);
+    freeFileBuffer(buffer);
     //fclose(sourceFile);
     if (objFile == NULL) {
-        freeFileBuffer(buffer);
+        //freeFileBuffer(buffer);
         return EXIT_FAILURE;
     }
 
