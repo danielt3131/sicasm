@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include "fileBuffer.h"
 #include "tables.h"
 #include "createObjectFile.h"
 #include "freeObjectFile.h"
@@ -16,6 +17,8 @@ int main(int argc, char **argv) {
     bool isPiped = false;
     FILE *sourceFile;
     if (!isatty(STDIN_FILENO)) {
+        sourceFile = stdin;
+        /*
         sourceFile = tmpfile();
         if (sourceFile == NULL) {
             fprintf(stderr, "Error %s: Unable to create tmpfile\n", strerror(errno));
@@ -26,6 +29,7 @@ int main(int argc, char **argv) {
         }
         free(buffer);
         rewind(sourceFile);
+        */
         printMode = true;
         isPiped = true;
     }
@@ -42,7 +46,7 @@ int main(int argc, char **argv) {
             return EXIT_SUCCESS;
         }
         if (!strcmp("-v", argv[1])) {
-            printf("Version 1.0 by Daniel J. Thompson\n");
+            printf("Version 1.1 by Daniel J. Thompson\n");
             return EXIT_SUCCESS;
         }
     }
@@ -51,22 +55,26 @@ int main(int argc, char **argv) {
         sourceFile = fopen(argv[1], "r");
     }
     if (sourceFile == NULL) {
-        // Tests for read permissions
-        if (access(argv[1], R_OK)) {
+        // Tests for read permissions by if the file exists
+        if (access(argv[1], F_OK)) {
+            fprintf(stderr, "The file %s does not exist\n", argv[1]);
+        } else {
             fprintf(stderr, "The user %s lacks read permissions for %s\n", getlogin(), argv[1]);
             //fprintf(stderr, "The file %s has insufficient read permissions\nMake sure that user %s has read permissions for %s\n", argv[1], getlogin(), argv[1]);
-        } else {
-            fprintf(stderr, "The file %s does not exist\n", argv[1]);
         }
         //printf("The file %s does not exist or insufficient permissions to read in %s\n", argv[1], argv[1]);
         return EXIT_FAILURE;
     }
+    // Create file buffer
+    int numSymbols = 0;
+    fileBuffer *buffer = createFileBuffer(sourceFile, &numSymbols);
     /**
      * @brief Pass 1
      */
-    struct symbolTable *symbolTable = createSymbolTable(sourceFile);
+    struct symbolTable *symbolTable = createSymbolTable(buffer, &numSymbols);
     if (symbolTable == NULL) {
-        fclose(sourceFile);
+        freeFileBuffer(buffer);
+        //fclose(sourceFile);
         return EXIT_FAILURE;
     }
     /**
@@ -77,17 +85,20 @@ int main(int argc, char **argv) {
             printf("%s \t %X\n", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
         }
         freeSymbolTable(symbolTable);
-        fclose(sourceFile);
+        freeFileBuffer(buffer);
+        //fclose(sourceFile);
         return EXIT_SUCCESS;
     }
     // Rewinds the file pointer back to the beginning of the file
-    rewind(sourceFile);
+    //rewind(sourceFile);
     /**
      * Pass 2
      */
-    objectFile *objFile = createObjectFile(symbolTable, sourceFile);
-    fclose(sourceFile);
+    objectFile *objFile = createObjectFile(symbolTable, buffer);
+    freeFileBuffer(buffer);
+    //fclose(sourceFile);
     if (objFile == NULL) {
+        //freeFileBuffer(buffer);
         return EXIT_FAILURE;
     }
 
@@ -96,7 +107,7 @@ int main(int argc, char **argv) {
     if (argc > 2 && !strcmp(argv[2], "-o")) {
         outputFilename = argv[3];
         savePath = true;
-    } else if (argc > 1) {
+    } else if (!isPiped) {
         outputFilename = malloc(strlen(argv[1]) + 8);
         strcpy(outputFilename, argv[1]);
         strcat(outputFilename, ".obj");

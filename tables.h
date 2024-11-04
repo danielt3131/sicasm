@@ -12,7 +12,12 @@ typedef struct {
     char *operands[2];
 } instruction;
 */
-
+typedef struct {
+    char **lines;
+    int numLines;
+    int allocationAmount;
+    int *lineNumbers;
+} fileBuffer;
 
 typedef struct {
     char *name;
@@ -45,6 +50,7 @@ typedef struct {
 
 struct stringArray* stringSplit(char *string, char *delim);
 void freeSymbolTable(struct symbolTable*);
-struct symbolTable* createSymbolTable(FILE *file);
+struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols);
+//struct symbolTable* createSymbolTable(FILE *file);
 void freeSplit(struct stringArray *split);
 #endif
