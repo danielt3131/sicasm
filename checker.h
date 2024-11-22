@@ -1,5 +1,6 @@
 /**
  * @author Daniel J. Thompson (N01568044)
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #ifndef CHECKER_H
 #define CHECKER_H

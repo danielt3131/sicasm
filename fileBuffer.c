@@ -1,3 +1,7 @@
+/**
+ * @author Daniel J. Thompson (N01568044)
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
 #include "fileBuffer.h"
 #include <stdlib.h>
 #include <string.h>
