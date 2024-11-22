@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <errno.h>
 #include "fileBuffer.h"
 #include "tables.h"
@@ -54,17 +54,17 @@ int main(int argc, char **argv) {
     if (!printMode) {
         sourceFile = fopen(argv[1], "r");
     }
-    if (sourceFile == NULL) {
-        // Tests for read permissions by if the file exists
-        if (access(argv[1], F_OK)) {
-            fprintf(stderr, "The file %s does not exist\n", argv[1]);
-        } else {
-            fprintf(stderr, "The user %s lacks read permissions for %s\n", getlogin(), argv[1]);
-            //fprintf(stderr, "The file %s has insufficient read permissions\nMake sure that user %s has read permissions for %s\n", argv[1], getlogin(), argv[1]);
-        }
-        //printf("The file %s does not exist or insufficient permissions to read in %s\n", argv[1], argv[1]);
-        return EXIT_FAILURE;
-    }
+    // if (sourceFile == NULL) {
+    //     // Tests for read permissions by if the file exists
+    //     if (access(argv[1], F_OK)) {
+    //         fprintf(stderr, "The file %s does not exist\n", argv[1]);
+    //     } else {
+    //         fprintf(stderr, "The user %s lacks read permissions for %s\n", getlogin(), argv[1]);
+    //         //fprintf(stderr, "The file %s has insufficient read permissions\nMake sure that user %s has read permissions for %s\n", argv[1], getlogin(), argv[1]);
+    //     }
+    //     //printf("The file %s does not exist or insufficient permissions to read in %s\n", argv[1], argv[1]);
+    //     return EXIT_FAILURE;
+    // }
     // Create file buffer
     int numSymbols = 0;
     fileBuffer *buffer = createFileBuffer(sourceFile, &numSymbols);
@@ -119,14 +119,14 @@ int main(int argc, char **argv) {
     } else {
         outputFile = fopen(outputFilename, "w");
     }
-    if (outputFile == NULL) {
-        fprintf(stderr, "Unable to write to %s\n", outputFilename);
-        fprintf(stderr, "You can either run me as root, fix the file permissions at %s for user %s, or run with -p to print the object file to stdout and you handle the pipe redirection\n", outputFilename, getlogin());
-        free(outputFilename);
-        freeSymbolTable(symbolTable);
-        freeObjectFile(objFile);
-        return EXIT_FAILURE;
-    }
+    // if (outputFile == NULL) {
+    //     fprintf(stderr, "Unable to write to %s\n", outputFilename);
+    //     fprintf(stderr, "You can either run me as root, fix the file permissions at %s for user %s, or run with -p to print the object file to stdout and you handle the pipe redirection\n", outputFilename, getlogin());
+    //     free(outputFilename);
+    //     freeSymbolTable(symbolTable);
+    //     freeObjectFile(objFile);
+    //     return EXIT_FAILURE;
+    // }
     fprintf(outputFile, "%s", objFile->hRecord);
     for (int i = 0; i < objFile->tRecords->numStrings; i++) {
         fprintf(outputFile, "%s", objFile->tRecords->stringArray[i]);
