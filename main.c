@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <unistd.h>
 #include <errno.h>
 #include "fileBuffer.h"
 #include "tables.h"
@@ -16,9 +15,9 @@ int main(int argc, char **argv) {
     bool printMode = false;
     bool isPiped = false;
     FILE *sourceFile;
+    /*
     if (!isatty(STDIN_FILENO)) {
         sourceFile = stdin;
-        /*
         sourceFile = tmpfile();
         if (sourceFile == NULL) {
             fprintf(stderr, "Error %s: Unable to create tmpfile\n", strerror(errno));
@@ -29,10 +28,11 @@ int main(int argc, char **argv) {
         }
         free(buffer);
         rewind(sourceFile);
-        */
+
         printMode = true;
         isPiped = true;
     }
+    */
     if (!(argc < 5 && argc > 1) && !printMode) {
         printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
         printf("Run %s -h for more info\n", argv[0]);
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     if (argc == 2) {
         if (!strcmp("-h", argv[1])) {
             printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
-            printHelpMenu();
+           // printHelpMenu();
             return EXIT_SUCCESS;
         }
         if (!strcmp("-v", argv[1])) {
@@ -145,15 +145,16 @@ int main(int argc, char **argv) {
     freeSymbolTable(symbolTable);
 }
 
-void printHelpMenu() {
-    /**
-     * Get the current working directory from getcwd syscall
-     * The arguments NULL and 0 are there to have the function wrapper for the syscall to automatically allocate the nesscarry amount of memory
-     */
-    char *workingDirectory = getcwd(NULL, 0);
-    printf("CLI arguments:\n\t--pass1only will only print the symbol table of the assembly file\n"
-           "\t-o will save the object file to the specified location instead of %s/example.sic.obj\n"
-           "\t-p will print the contents of the object file to stdout and will not create a file (used for pipes and redirection)\n"
-           "\t-v displays version info\n\t-h display this help menu\n", workingDirectory);
-    free(workingDirectory);
-}
+
+// void printHelpMenu() {
+//     /**
+//      * Get the current working directory from getcwd syscall
+//      * The arguments NULL and 0 are there to have the function wrapper for the syscall to automatically allocate the nesscarry amount of memory
+//      */
+//     char *workingDirectory = getcwd(NULL, 0);
+//     printf("CLI arguments:\n\t--pass1only will only print the symbol table of the assembly file\n"
+//            "\t-o will save the object file to the specified location instead of %s/example.sic.obj\n"
+//            "\t-p will print the contents of the object file to stdout and will not create a file (used for pipes and redirection)\n"
+//            "\t-v displays version info\n\t-h display this help menu\n", workingDirectory);
+//     free(workingDirectory);
+// }

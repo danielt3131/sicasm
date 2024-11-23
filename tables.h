@@ -17,6 +17,7 @@ typedef struct {
     int numLines;
     int allocationAmount;
     int *lineNumbers;
+    int *address;
 } fileBuffer;
 
 typedef struct {
