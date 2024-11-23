@@ -61,6 +61,7 @@ void freeFileBuffer(fileBuffer *buffer) {
     }
     free(buffer->lineNumbers);
     free(buffer->lines);
+    free(buffer->address);
     free(buffer);
 }
 // Replaces whitespace at the end of a string with tab-> 0x20 ' ' -> 0x09 \t as some files have leading spaces after a symbol name
