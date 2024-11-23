@@ -19,4 +19,5 @@ int getOpcodeValue(const char *opcode);
 #define RAM_LIMIT 32767
 #define OBJCODE_ERROR -1
 bool containsValidCharacters(char *string);
+int getXeFormat(const char *opcode);
 #endif
