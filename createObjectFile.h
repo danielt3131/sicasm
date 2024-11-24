@@ -13,4 +13,6 @@ objectFile* createObjectFile(struct symbolTable *table, fileBuffer *fileBuf);
 void addTRecord(objectFile* objFile, int address, char *objcode, int *startingAddress, char *tRecordBuffer, bool combine);
 void printTRecord(objectFile *objFile, int address, char *objcode);
 void addMRecord(objectFile* objFile, int address, int startAddress, const char *name);
+char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output);
+int opAndFlagsBit(int opcode, int n, int i, int x, int b, int p, int e);
 #endif
