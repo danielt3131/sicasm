@@ -250,6 +250,12 @@ void addMRecord(objectFile* objFile, int address, int startAddress, const char *
 
 }
 
+/*
+ * Take in the opcode and flag and return decimal representation of the
+ * hex
+ * 
+ * return: decimal representation of hex of the input combined
+ */
 int opAndFlagsBit(int opcode, int n, int i, int x, int b, int p, int e) {
     char binary[13];
     opcode >>= 2;
