@@ -1,5 +1,6 @@
 /**
  * @author Daniel J. Thompson (N01568044)
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "checker.h"
 #include "tables.h"
@@ -15,6 +16,7 @@
  */
 struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
     char *currentLine;
+    fileBuf->address = malloc(sizeof(int) * fileBuf->numLines);
     struct symbolTable *symbolTable = malloc(sizeof(struct symbolTable));
     symbolTable->symbols = malloc(*numSymbols * sizeof(symbol));
     symbolTable->allocatedAmount = *numSymbols;
@@ -124,6 +126,7 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
             }
             freeSplit(split);
             //puts("Created Symbol\n");
+
         } else {
             address += 3;
         }
@@ -132,6 +135,7 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
             fprintf(stderr, "SIC memory exhausted tried to use %x at line %d when the limit is 7FFF\n", address, lineNumber);
             return NULL;
         }
+        fileBuf->address[i] = address;
         //printf("%s \t %X\n", currentLine, address);
         //lineNumber++;
     }
