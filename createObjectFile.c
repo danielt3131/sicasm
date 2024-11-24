@@ -249,3 +249,24 @@ void addMRecord(objectFile* objFile, int address, int startAddress, const char *
    // printf("%s", mBuffer);
 
 }
+
+int opAndFlagsBit(int opcode, int n, int i, int x, int b, int p, int e) {
+    char binary[13];
+    opcode >>= 2;
+
+
+    for(int x = 5; x >= 0; x--) {
+        binary[x] = opcode%2 + '0';
+        opcode >>= 1;
+    }
+    binary[6] = n + '0';
+    binary[7] = i + '0';
+    binary[8] = x + '0';
+    binary[9] = b + '0';
+    binary[10] = p + '0';
+    binary[11] = e + '0';
+    binary[12] = '\0';
+
+    return (int)strtol(binary, NULL, 2);
+}
+
