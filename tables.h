@@ -47,6 +47,14 @@ typedef struct {
     struct stringArray* mRecords;
 } objectFile;
 
+typedef struct record {
+    char* r;
+    struct record* next;
+} record;
+typedef struct recordList {
+    record* head;
+    record* tail;
+} recordList;
 
 struct stringArray* stringSplit(char *string, char *delim);
 void freeSymbolTable(struct symbolTable*);
