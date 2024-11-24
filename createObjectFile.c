@@ -276,3 +276,38 @@ int opAndFlagsBit(int opcode, int n, int i, int x, int b, int p, int e) {
     return (int)strtol(binary, NULL, 2);
 }
 
+/*
+ * generate hex object code for BYTE directive to the * max length specified or entire length of string, * * whichever is smaller. Return the string address of * where it stopped
+ *
+ * str: The string to parse
+ * mode: which BYTE mode, either 'C' or 'X"
+ * allowHexLen: Maximum length allowed
+ * output: result will store in this
+ */
+char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output) {
+  if(allowHexLen%2 != 0) return str; //please make sure allowHexLen is even
+
+
+  char* result;
+  if(mode == 'C') {
+    int resultLen = strlen(str)*2 < allowHexLen ? strlen(str)*2 : allowHexLen;
+    result = calloc(resultLen + 1, sizeof(char));
+
+
+    for(int x = 0; x < resultLen; x+=2) {
+      sprintf(result+x, "%X", *str);
+      str++;
+    }
+  }
+  else if (mode == 'X') {
+    int resultLen = strlen(str) < allowHexLen ? strlen(str) : allowHexLen;
+    result = calloc(resultLen + 1, sizeof(char));
+   
+    for(int x = 0; x < resultLen; x++) {
+      sprintf(result+x, "%c", *str);
+      str++;
+    }
+  }
+  *output = result;
+  return str;
+}
