@@ -15,4 +15,6 @@ void printTRecord(objectFile *objFile, int address, char *objcode);
 void addMRecord(objectFile* objFile, int address, int startAddress, const char *name);
 char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output);
 int opAndFlagsBit(int opcode, int n, int i, int x, int b, int p, int e);
+int getOperandNumber(char* operand);
+int getFlagsInfo(char* opcode, char* operand, int operAdd, int baseAdd, int pcAdd, int* n, int* i, int* x, int* b, int* p, int* e);
 #endif

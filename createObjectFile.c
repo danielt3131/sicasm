@@ -12,6 +12,28 @@
 #include "fileBuffer.h"
 
 objectFile* createObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf) {
+    int n = 0, i = 0, x = 0, b = 0, p = 0, e = 0;
+
+    for(int x = 0; x < *(fileBuf->lineNumbers); x++) {
+        struct stringArray* lineTest = stringSplit(fileBuf->lines[x], "\t\n");
+        char* opcode = NULL, operand = NULL;
+        if(lineTest->numStrings == 1) {
+            opcode = lineTest->stringArray[0];
+        }
+        else if(lineTest->numStrings == 2) {
+            opcode = lineTest->stringArray[0];
+            operand = lineTest->stringArray[1];
+        }
+        else if(lineTest->numStrings==3) {
+            opcode = lineTest->stringArray[1];
+            operand = lineTest->stringArray[2];
+        }
+        else {
+            printf("Got more than 3 string\n");
+        }
+        //getFlagsInfo(opcode, operand, symbolTable->symbols->address);
+    }
+
     char *currentLine;
     char buffer[100];
     char tRecordBuffer[61];
@@ -314,4 +336,62 @@ char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output)
   }
   *output = result;
   return str;
+}
+
+/*
+ * Will output the flag bit info and check if the flag are logically valid
+ * Return 0 if no error occur, else return the error code
+ *        20: the instruction does not have format 3
+ *        21: Multiple addressing mode not allowed
+ *        22: displacement for format 3 does not fit with 12 bits, 
+ *                              maybe ask the user to use format 4
+ */
+int getFlagsInfo(char* opcode, char* operand, int operAdd, int baseAdd, int pcAdd, int* n, int* i, int* x, int* b, int* p, int* e) {
+    if(getXeFormat(opcode) != 3) return 20; //Please only call this when you know format is 3 (or 4)
+    
+    //Default bit
+    *n = 1, *i = 1, *x = 0, *b = 0, *p = 0, *e = 0;
+
+    if(*opcode == '+') *e = 1; 
+    if(operand) {
+        if(*operand == '@') *i = 0;
+        if(*operand == '#') *n = 0;
+        if(operand[strlen(operand)-1] == 'X') *x = 1;
+    }
+
+    //operand can only have one address mode
+    if(*x == 1 && *n != 1 && *i != 1) return 21;
+    if(*i == 0 && *n != 1 && *x != 0) return 21;
+    if(*n == 0 && *i != 1 && *x != 0) return 21;
+
+    if(*e == 1) return 0; //When is format 4, no b or p is needed
+    if(!operand) return 0; //When no operand, no b or p is needed
+    if(getOperandNumber(operand) != -1) return 0; //If is a immediate integer, no b or p is needed
+    if((operAdd - pcAdd >= -2048) && (operAdd - pcAdd <= 2047)) {
+        *p = 1;
+        return 0;
+    }
+    else if((operAdd - baseAdd >= 0) && (operAdd - baseAdd <= 4095)) {
+        *b = 1;
+        return 0;
+    }
+    else
+        return 22; //The displacement does not fit into 12 bits. I think we can just output error and tell user to use format 4
+}
+
+/*
+ * Get the int representation of the 
+ * immediate value. Return -1 if error 
+ * occur or is not a immediate integer
+ */
+int getOperandNumber(char* operand) {
+    if(operand == NULL || *operand == '\0') return -1;
+
+    if(*operand != '#') return -1; //Must have immediate indictor in order to allow number
+    operand++;
+    char *end;
+
+    long num = strtol(operand, &end, 10);
+    if(*end != '\0') return -1; //Not a number;
+    return num;
 }

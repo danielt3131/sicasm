@@ -20,4 +20,5 @@ int getOpcodeValue(const char *opcode);
 #define OBJCODE_ERROR -1
 bool containsValidCharacters(char *string);
 int getXeFormat(const char *opcode);
+int getAddress(struct symbolTable* table, const char *symbol);
 #endif
