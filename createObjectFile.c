@@ -346,7 +346,7 @@ char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output)
  *        22: displacement for format 3 does not fit with 12 bits, 
  *                              maybe ask the user to use format 4
  */
-int getFlagsInfo(char* opcode, char* operand, int operAdd, int baseAdd, int pcAdd, int* n, int* i, int* x, int* b, int* p, int* e) {
+int getFlagsInfo(char* opcode, char* operand, int curAdd, int operAdd, int baseAdd, int* n, int* i, int* x, int* b, int* p, int* e) {
     if(getXeFormat(removeFirstFlagLetter(opcode)) != 3) return 20; //Please only call this when you know format is 3 (or 4)
     
     //Default bit
@@ -367,6 +367,8 @@ int getFlagsInfo(char* opcode, char* operand, int operAdd, int baseAdd, int pcAd
     if(*e == 1) return 0; //When is format 4, no b or p is needed
     if(!operand) return 0; //When no operand, no b or p is needed
     if(getOperandNumber(operand) != -1) return 0; //If is a immediate integer, no b or p is needed
+
+    int pcAdd = curAdd + 3; //At this point, it can only be format 3, so pc register is 3 byte next.
     if((operAdd - pcAdd >= -2048) && (operAdd - pcAdd <= 2047)) {
         *p = 1;
         return 0;
