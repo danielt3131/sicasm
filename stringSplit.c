@@ -15,7 +15,8 @@ struct stringArray* stringSplit(char *string, char *delim) {
     split->stringArray = malloc(sizeof(char *) * split->allocatedAmount);
     char *splitTemp = strtok(stringCopy, delim);
     while (splitTemp != NULL) {
-        if (splitTemp[0] == '#' || splitTemp[0] == '\n') {
+        //if (splitTemp[0] == '#' || splitTemp[0] == '\n') 
+        if(splitTemp[0] == '\n') {
             break;
         }
         if (split->numStrings >= split->allocatedAmount) {
