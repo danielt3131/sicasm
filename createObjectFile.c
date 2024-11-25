@@ -12,27 +12,44 @@
 #include "fileBuffer.h"
 
 objectFile* createObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf) {
-    int n = 0, i = 0, x = 0, b = 0, p = 0, e = 0;
+    for(int cur = 0; cur < fileBuf->numLines; cur++) {
+        struct stringArray* lineTest = stringSplit(fileBuf->lines[cur], "\t\n");
+        char* ins = NULL;
+        char* operand = NULL;
 
-    for(int x = 0; x < *(fileBuf->lineNumbers); x++) {
-        struct stringArray* lineTest = stringSplit(fileBuf->lines[x], "\t\n");
-        char* opcode = NULL, operand = NULL;
         if(lineTest->numStrings == 1) {
-            opcode = lineTest->stringArray[0];
+            ins = lineTest->stringArray[0];
         }
         else if(lineTest->numStrings == 2) {
-            opcode = lineTest->stringArray[0];
+            ins = lineTest->stringArray[0];
             operand = lineTest->stringArray[1];
         }
         else if(lineTest->numStrings==3) {
-            opcode = lineTest->stringArray[1];
+            ins = lineTest->stringArray[1];
             operand = lineTest->stringArray[2];
         }
         else {
             printf("Got more than 3 string\n");
         }
-        //getFlagsInfo(opcode, operand, symbolTable->symbols->address);
+        int operAdd = 0;
+        char* output = calloc(10, sizeof(char));
+        int errorCode = -1;
+        if(operand != NULL) {
+            operAdd= getAddress(symbolTable, stringSplit(removeFirstFlagLetter(operand), ",")->stringArray[0]);
+        }
+        if(getXeFormat(removeFirstFlagLetter(ins)) == 3) {
+            errorCode = getObjCodeFormat3N4(ins, operand, fileBuf->address[cur], 0, operAdd, &output);
+            if(!errorCode) {
+                printf("%s\t%s\t%s\t\n", ins, operand, output);
+                printf("pcAdd: %03X operandAdd: %05X\n", fileBuf->address[cur]+3, operAdd);
+            }
+            else
+                printf("%s\t%s\tError:%d\n", ins, operand, errorCode);
+        }
+        else
+            printf("%s\t%s\tNot a format 3\n", ins, operand);
     }
+    return NULL;
 
     char *currentLine;
     char buffer[100];
