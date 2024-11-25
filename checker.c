@@ -131,6 +131,8 @@ int getXeFormat(const char *opcode) {
             return opcodeFormats[i];
         }
     }
+
+    return -1;
 }
 
 int getAddress(struct symbolTable* table, const char *symbol) {
