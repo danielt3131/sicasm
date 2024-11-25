@@ -347,7 +347,7 @@ char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output)
  *                              maybe ask the user to use format 4
  */
 int getFlagsInfo(char* opcode, char* operand, int operAdd, int baseAdd, int pcAdd, int* n, int* i, int* x, int* b, int* p, int* e) {
-    if(getXeFormat(opcode) != 3 && getXeFormat(opcode++) != 3) return 20; //Please only call this when you know format is 3 (or 4)
+    if(getXeFormat(removeFirstFlagLetter(opcode)) != 3) return 20; //Please only call this when you know format is 3 (or 4)
     
     //Default bit
     *n = 1, *i = 1, *x = 0, *b = 0, *p = 0, *e = 0;
@@ -394,4 +394,19 @@ int getOperandNumber(char* operand) {
     long num = strtol(operand, &end, 10);
     if(*end != '\0') return -1; //Not a number;
     return num;
+}
+
+/*
+ * Use it for now, combine this to the check later
+ * This could probably be done inside the isOpcode function
+ * Just leave it for now, combine into isOpcode later. 
+ */
+char* removeFirstFlagLetter(char* str) {
+    switch (*str) {
+        case '+':
+        case '@':
+        case '#':
+        str++;
+    }
+    return str;
 }
