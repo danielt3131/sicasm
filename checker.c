@@ -132,3 +132,12 @@ int getXeFormat(const char *opcode) {
         }
     }
 }
+
+int getAddress(struct symbolTable* table, const char *symbol) {
+    for (int i = 0; i < table->numberOfSymbols; i++) {
+        if(!strcmp(symbol, table->symbols[i].name)) {
+            return table->symbols[i].address;
+        }
+    }
+    return -1;
+}
