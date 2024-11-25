@@ -346,13 +346,13 @@ char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output)
  *        22: displacement for format 3 does not fit with 12 bits, 
  *                              maybe ask the user to use format 4
  */
-int getFlagsInfo(char* opcode, char* operand, int curAdd, int operAdd, int baseAdd, int* n, int* i, int* x, int* b, int* p, int* e) {
-    if(getXeFormat(removeFirstFlagLetter(opcode)) != 3) return 20; //Please only call this when you know format is 3 (or 4)
+int getFlagsInfo(char* ins, char* operand, int curAdd, int operAdd, int baseAdd, int* n, int* i, int* x, int* b, int* p, int* e) {
+    if(getXeFormat(removeFirstFlagLetter(ins)) != 3) return 20; //Please only call this when you know format is 3 (or 4)
     
     //Default bit
     *n = 1, *i = 1, *x = 0, *b = 0, *p = 0, *e = 0;
 
-    if(*opcode == '+') *e = 1; 
+    if(*ins == '+') *e = 1; 
     if(operand) {
         if(*operand == '@') *i = 0;
         if(*operand == '#') *n = 0;
@@ -411,4 +411,30 @@ char* removeFirstFlagLetter(char* str) {
         str++;
     }
     return str;
+}
+
+int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, char** output) {
+    int n = 0, i = 0, x = 0, b = 0, p = 0, e = 0;    
+    int errorCode = getFlagsInfo(ins, operand, curAdd, operAdd, baseAdd, &n, &i, &x, &b, &p, &e);
+    int length = (e == 1) ? 4 : 3;
+
+    if(!errorCode) {
+        int upper3Hex = opAndFlagsBit(getOpcodeValue(removeFirstFlagLetter(ins)), n, i, x, b, p, e);
+        int lowerHex = operAdd;
+
+        if(i) {
+            int testInt = getOperandNumber(operand); //Testing if is a immediate integer
+            if(testInt != -1) lowerHex = testInt; //If the operand is a immediate integer, change the displacement to that value
+        }
+        if(p) lowerHex = operAdd - (curAdd + length); //This should not happen for immediate integer, checked by the getFlagsInfo
+        if(b) lowerHex = operAdd - baseAdd; //This also shouldn't happen for immediate integer, 
+        
+        if(e)
+            sprintf(*output, "%03X%05X", upper3Hex, lowerHex & 0xFFFFF);
+        else
+            sprintf(*output, "%03X%03X", upper3Hex, lowerHex & 0xFFF);
+        
+        return 0; //Success
+    }
+    return errorCode;
 }
