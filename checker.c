@@ -131,6 +131,7 @@ int getOpcodeValue(const char *opcode) {
 }
 
 int getXeFormat(const char *opcode) {
+    if(*opcode == '+') opcode++;
     for (int i = 0; i < NUMBER_OF_OPCODES; i++) {
         if (!strcmp(opcode, opcodes[i])) {
             return opcodeFormats[i];
