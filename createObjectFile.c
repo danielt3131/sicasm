@@ -51,7 +51,7 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBu
     // }
 
     recordList* record = calloc(1, sizeof(recordList));
-    printf("%d\n",getTRecords(symbolTable, fileBuf, record));
+    getTRecords(symbolTable, fileBuf, record);
     printRecordTable(*record);
     return NULL;
 
@@ -252,12 +252,13 @@ void removeCR(char *str) {
 int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable) {
     char TObjCode[61]="";
     int startAdd = fileBuf->address[0];
-    int curAdd;
+    int endAdd = fileBuf->address[0];
+    int baseAdd = 0;
     for(int x = 0; x < fileBuf->numLines; x++) {
-        printf("doing %s\n", fileBuf->lines[x]);
         char* insOrDir;
         char* operand;
         char* curLine = fileBuf->lines[x];
+        int curAdd = fileBuf->address[x];
         struct stringArray* strArr = stringSplit(curLine, "\t\n");
         
         if(isspace(curLine[0])) {
@@ -273,7 +274,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
         if(!isDirective(insOrDir)) {
             char* newObjCode = calloc(9, sizeof(char));
             int errorCode;
-            curAdd = fileBuf->address[x];
+            
             int operAdd = 0;
             if(operand != NULL) operAdd = getAddress(symbolTable, removeFirstFlagLetter(operand));
             if(operAdd == -1) {
@@ -292,6 +293,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
                 case 3:
                     //TODO, add base address
                     errorCode = getObjCodeFormat3N4(insOrDir, operand, curAdd, 0, operAdd, &newObjCode);
+                    printf("%s for %s\n", newObjCode, insOrDir);
                     break;
                 default:
                     printf("Error occured\n\n\n\n\n");
@@ -302,21 +304,32 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
             if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
                 strcat(TObjCode, newObjCode);
                 free(newObjCode);
+                endAdd = curAdd;
             }
             else {
                 char* newRecord = calloc(70, sizeof(char));
-                sprintf(newRecord, "T%06X%02X%s", startAdd, curAdd-startAdd, TObjCode);
+                printf("Insert: endAdd: %d startAdd: %d\n", endAdd, startAdd);
+                sprintf(newRecord, "T%06X%02X%s", startAdd, endAdd-startAdd, TObjCode);
                 insertRecord(recordTable, newRecord);
                 startAdd = curAdd;
                 TObjCode[0] = '\0';
                 strcat(TObjCode, newObjCode);
                 free(newObjCode);
+                endAdd = curAdd;
             }
+        }
+        //Directive
+        else {
+            if(strcmp(insOrDir, "BASE") == 0) {
+                baseAdd = getOperAddress(symbolTable, operand);
+                continue;
+            }
+            if()
         }
 
     }
     char* newRecord = calloc(70, sizeof(char));
-    sprintf(newRecord, "T%06X%02X%s", startAdd, curAdd-startAdd, TObjCode);
+    sprintf(newRecord, "T%06X%02X%s", startAdd, endAdd-startAdd, TObjCode);
     insertRecord(recordTable, newRecord);
 
 
@@ -512,4 +525,29 @@ int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int o
         return 0; //Success
     }
     return errorCode;
+}
+
+int getOperAddress(struct symbolTable *symbolTable, char* operand) {
+    int result;
+
+    if(*operand == '#') {
+        int testNum = getOperandNumber(operand); 
+        if(testNum != -1)
+            return testNum;
+        operand++; //Meaning is a immedate address. skip the #
+    }
+    else if(*operand == '@')
+        operand++;
+    
+    //Testing index addressing mode
+    int operandLen = strlen(operand);
+    if(operandLen > 1 && operand[operandLen-1] == 'X' && operand[operandLen-2] == ',') {
+        char temp[operandLen -1];
+        strncpy(temp, operand, operandLen-2);
+        temp[operandLen-2] = '\0';
+
+        return getAddress(symbolTable, temp);
+    }
+
+    return getAddress(symbolTable, operand);
 }
