@@ -95,6 +95,11 @@ bool isDirective(char *directive) {
 }
 
 bool isOpcode(char *opcode){
+    // check if it can have +
+    if(*opcode == '+' && getXeFormat(opcode+1) == 3)
+        opcode++;
+    else
+        return false;
     // check against list of opcodes
     for (int i = 0; i < NUMBER_OF_OPCODES; i++) {
         if(!strcmp(opcode, opcodes[i])) {
