@@ -34,6 +34,7 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
             return NULL;
         }
         lineNumber = fileBuf->lineNumbers[i];
+        struct stringArray *split = stringSplit(currentLine, "\t\n");
         if (!isspace(currentLine[0])) {
             /*
             if (currentSymbol >= symbolTable->allocatedAmount) {
@@ -41,7 +42,6 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
                 symbolTable->symbols = realloc(symbolTable->symbols, sizeof(symbol) * symbolTable->allocatedAmount);
             }
             */
-            struct stringArray *split = stringSplit(currentLine, "\t\n");
             if (isValidSymbol(split->stringArray[0], symbolTable, lineNumber) && split->numStrings >= 2) {
                 symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[0]) + 1);
                 strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[0]);
@@ -108,7 +108,12 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
                     symbolTable->symbols[currentSymbol].address = address;
                 } else {
                     symbolTable->symbols[currentSymbol].address = address;
-                    address += 3;
+                    int addressToAdd;
+                    addressToAdd = getXeFormat(split->stringArray[1]);
+                    if(addressToAdd == -1) return NULL;
+                    if(addressToAdd == 3)
+                        addressToAdd = (split->stringArray[1][0] == '+') ? 4 : 3;
+                    address += addressToAdd;
                 }
                 currentSymbol++;
                 symbolTable->numberOfSymbols++;
@@ -127,8 +132,13 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
             freeSplit(split);
             //puts("Created Symbol\n");
 
-        } else {
-            address += 3;
+        } else { //I think this might not work if BYTE directive does not have a symbol
+            int addressToAdd;
+            addressToAdd = getXeFormat(split->stringArray[0]);
+            if(addressToAdd == -1) return NULL;
+            if(addressToAdd == 3)
+                addressToAdd = (split->stringArray[0][0] == '+') ? 4 : 3;
+            address += addressToAdd;
         }
         if (address > RAM_LIMIT) {
             freeSymbolTable(symbolTable);
