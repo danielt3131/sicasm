@@ -106,7 +106,10 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
                 } else if (!strcmp(split->stringArray[1], "END")) {
                     seenEnd = true;
                     symbolTable->symbols[currentSymbol].address = address;
-                } else {
+                } 
+                 else if(strcmp(split->stringArray[1], "BASE") == 0) continue; 
+
+                 else {
                     symbolTable->symbols[currentSymbol].address = address;
                     int addressToAdd;
                     addressToAdd = getXeFormat(split->stringArray[1]);
