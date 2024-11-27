@@ -19,4 +19,7 @@ int getOperandNumber(char* operand);
 int getFlagsInfo(char* ins, char* operand, int curAdd, int operAdd, int baseAdd, int* n, int* i, int* x, int* b, int* p, int* e);
 char* removeFirstFlagLetter(char* str);
 int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, char** output);
+int getTObjCode(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, char** output);
+long getWordNum(char* operand);
+char* createTRecord(int startAdd, char* Objcodes);
 #endif

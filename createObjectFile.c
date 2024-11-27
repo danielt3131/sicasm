@@ -51,7 +51,7 @@ objectFile* createObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBu
     // }
 
     recordList* record = calloc(1, sizeof(recordList));
-    getTRecords(symbolTable, fileBuf, record);
+    int error = getTRecords(symbolTable, fileBuf, record);
     printRecordTable(*record);
     return NULL;
 
@@ -252,13 +252,15 @@ void removeCR(char *str) {
 int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable) {
     char TObjCode[61]="";
     int startAdd = fileBuf->address[0];
-    int endAdd = fileBuf->address[0];
     int baseAdd = 0;
-    for(int x = 0; x < fileBuf->numLines; x++) {
+    int needNewRecord = 0; //Flag for going to next T-record
+    for(int x = 1; x < fileBuf->numLines-1; x++) {
         char* insOrDir;
         char* operand;
+        char* newObjCode;
         char* curLine = fileBuf->lines[x];
         int curAdd = fileBuf->address[x];
+        int nextStartAdd = fileBuf->address[x-1];
         struct stringArray* strArr = stringSplit(curLine, "\t\n");
         
         if(isspace(curLine[0])) {
@@ -272,50 +274,23 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
 
         //Instruction
         if(!isDirective(insOrDir)) {
-            char* newObjCode = calloc(9, sizeof(char));
-            int errorCode;
-            
+            newObjCode = calloc(9, sizeof(char));
+
             int operAdd = 0;
-            if(operand != NULL) operAdd = getAddress(symbolTable, removeFirstFlagLetter(operand));
-            if(operAdd == -1) {
-                operAdd = getOperandNumber(operand);
-                if(operAdd == -1) {
-                    operAdd = getAddress(symbolTable,stringSplit(removeFirstFlagLetter(operand), ",")->stringArray[0]);
-                }
-            }
-            switch (getXeFormat(removeFirstFlagLetter(insOrDir))) {
-                case 1:
-                    continue; //TODO
-                    break;
-                case 2:
-                    continue; //TODO
-                    break;
-                case 3:
-                    //TODO, add base address
-                    errorCode = getObjCodeFormat3N4(insOrDir, operand, curAdd, 0, operAdd, &newObjCode);
-                    printf("%s for %s\n", newObjCode, insOrDir);
-                    break;
-                default:
-                    printf("Error occured\n\n\n\n\n");
-                    break;
-            }
+            if(operand != NULL) operAdd = getOperAddress(symbolTable, operand);
+            if(operAdd == -1) return -1; //Error occur
+
+            int errorCode = getTObjCode(insOrDir, operand, curAdd, baseAdd, operAdd, &newObjCode);
+
             if(errorCode) return errorCode;
 
             if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
                 strcat(TObjCode, newObjCode);
                 free(newObjCode);
-                endAdd = curAdd;
+                newObjCode = NULL;
             }
             else {
-                char* newRecord = calloc(70, sizeof(char));
-                printf("Insert: endAdd: %d startAdd: %d\n", endAdd, startAdd);
-                sprintf(newRecord, "T%06X%02X%s", startAdd, endAdd-startAdd, TObjCode);
-                insertRecord(recordTable, newRecord);
-                startAdd = curAdd;
-                TObjCode[0] = '\0';
-                strcat(TObjCode, newObjCode);
-                free(newObjCode);
-                endAdd = curAdd;
+                needNewRecord = 1;
             }
         }
         //Directive
@@ -324,16 +299,99 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
                 baseAdd = getOperAddress(symbolTable, operand);
                 continue;
             }
-            if()
+            else if(strcmp(insOrDir, "WORD") == 0) {
+                newObjCode = calloc(7, sizeof(char));
+                sprintf(newObjCode, "%06X", getWordNum(operand));
+                if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
+                    strcat(TObjCode, newObjCode);
+                    free(newObjCode);
+                    newObjCode = NULL;
+                }
+                else
+                    needNewRecord = 1;
+            }
+            else if(strcmp(insOrDir, "RESW") == 0 || strcmp(insOrDir, "RESB") == 0) {
+                needNewRecord =1;
+                nextStartAdd = fileBuf->address[x];
+            }
+            else if(strcmp(insOrDir, "BYTE") == 0) {
+                char mode = *operand;
+                operand[strlen(operand)-1] = '\0'; //remove the '
+                operand+=2;    //Remove mode and '
+                char* temp = NULL;
+                int byteAdded = 0;
+                do {
+                    operand = getJustEnoughByteHex(operand, mode, 60-strlen(TObjCode), &temp);
+                    strcat(TObjCode, temp);
+                    byteAdded = strlen(temp) /2;
+                    free(temp);
+                    
+                    if(strlen(TObjCode) >= 60) {
+                        char* newRecord = createTRecord(startAdd, TObjCode);
+                        insertRecord(recordTable, newRecord);
+                        nextStartAdd+=byteAdded;
+                        startAdd = nextStartAdd;
+                        TObjCode[0] = '\0';
+                    }
+                }
+                while(*operand != '\0');
+            } 
+
+        }
+
+        if(needNewRecord) {
+            if(TObjCode[0] != '\0'){
+                char* newRecord = createTRecord(startAdd, TObjCode);
+                insertRecord(recordTable, newRecord);
+                TObjCode[0] = '\0';
+                if(newObjCode != NULL) strcat(TObjCode, newObjCode);
+                free(newObjCode);
+                newObjCode = NULL;
+            }
+            needNewRecord = 0;
+            startAdd = nextStartAdd;
+
         }
 
     }
-    char* newRecord = calloc(70, sizeof(char));
-    sprintf(newRecord, "T%06X%02X%s", startAdd, endAdd-startAdd, TObjCode);
-    insertRecord(recordTable, newRecord);
+    if(TObjCode[0] != '\0') {
+        char* newRecord = createTRecord(startAdd, TObjCode);
+        insertRecord(recordTable, newRecord);
+    }
 
 
     return 0;
+}
+
+char* createTRecord(int startAdd, char* Objcodes) {
+    char* result = calloc(9 + strlen(Objcodes) + 1, sizeof(char));
+    sprintf(result, "T%06X%02X%s", startAdd, strlen(Objcodes)/2, Objcodes);
+
+    return result;
+}
+
+long getWordNum(char* operand) {
+    char* end;
+    long num = strtol(operand, &end, 10);
+    if(*end != '\0' || num > 8388607) return -1; //Not a number;
+    return num;
+}
+
+int getTObjCode(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, char** output) {
+    int errorCode = 0;
+    switch(getXeFormat(ins)) {
+        case 1:
+            break;
+        case 2:
+            break;
+        case 3:
+            errorCode = getObjCodeFormat3N4(ins, operand, curAdd, baseAdd, operAdd, output);
+            break;
+        default:
+            printf("Error occur\n");
+            break;
+    }
+    return errorCode; // If errorCode is 0, it means no error;
 }
 void printTRecord(objectFile *objFile, int address, char *objcode) {
     int objCodeLength = strlen(objcode) / 2;
@@ -505,7 +563,6 @@ int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int o
     int n = 0, i = 0, x = 0, b = 0, p = 0, e = 0;    
     int errorCode = getFlagsInfo(ins, operand, curAdd, operAdd, baseAdd, &n, &i, &x, &b, &p, &e);
     int length = (e == 1) ? 4 : 3;
-
     if(!errorCode) {
         int upper3Hex = opAndFlagsBit(getOpcodeValue(removeFirstFlagLetter(ins)), n, i, x, b, p, e);
         int lowerHex = operAdd;
@@ -514,9 +571,8 @@ int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int o
             int testInt = getOperandNumber(operand); //Testing if is a immediate integer
             if(testInt != -1) lowerHex = testInt; //If the operand is a immediate integer, change the displacement to that value
         }
-        if(p) lowerHex = operAdd - (curAdd + length); //This should not happen for immediate integer, checked by the getFlagsInfo
+        if(p) lowerHex = operAdd - (curAdd); //This should not happen for immediate integer, checked by the getFlagsInfo
         if(b) lowerHex = operAdd - baseAdd; //This also shouldn't happen for immediate integer, 
-        
         if(e)
             sprintf(*output, "%03X%05X", upper3Hex, lowerHex & 0xFFFFF);
         else
@@ -528,7 +584,7 @@ int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int o
 }
 
 int getOperAddress(struct symbolTable *symbolTable, char* operand) {
-    int result;
+    int operandLen = strlen(operand);
 
     if(*operand == '#') {
         int testNum = getOperandNumber(operand); 
@@ -538,10 +594,8 @@ int getOperAddress(struct symbolTable *symbolTable, char* operand) {
     }
     else if(*operand == '@')
         operand++;
-    
     //Testing index addressing mode
-    int operandLen = strlen(operand);
-    if(operandLen > 1 && operand[operandLen-1] == 'X' && operand[operandLen-2] == ',') {
+    else if(operandLen > 1 && operand[operandLen-1] == 'X' && operand[operandLen-2] == ',') {
         char temp[operandLen -1];
         strncpy(temp, operand, operandLen-2);
         temp[operandLen-2] = '\0';
