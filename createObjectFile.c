@@ -12,43 +12,47 @@
 #include "fileBuffer.h"
 
 objectFile* createObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf) {
-    for(int cur = 0; cur < fileBuf->numLines; cur++) {
-        struct stringArray* lineTest = stringSplit(fileBuf->lines[cur], "\t\n");
-        char* ins = NULL;
-        char* operand = NULL;
+    // for(int cur = 0; cur < fileBuf->numLines; cur++) {
+    //     struct stringArray* lineTest = stringSplit(fileBuf->lines[cur], "\t\n");
+    //     char* ins = NULL;
+    //     char* operand = NULL;
 
-        if(lineTest->numStrings == 1) {
-            ins = lineTest->stringArray[0];
-        }
-        else if(lineTest->numStrings == 2) {
-            ins = lineTest->stringArray[0];
-            operand = lineTest->stringArray[1];
-        }
-        else if(lineTest->numStrings==3) {
-            ins = lineTest->stringArray[1];
-            operand = lineTest->stringArray[2];
-        }
-        else {
-            printf("Got more than 3 string\n");
-        }
-        int operAdd = 0;
-        char* output = calloc(10, sizeof(char));
-        int errorCode = -1;
-        if(operand != NULL) {
-            operAdd= getAddress(symbolTable, stringSplit(removeFirstFlagLetter(operand), ",")->stringArray[0]);
-        }
-        if(getXeFormat(removeFirstFlagLetter(ins)) == 3) {
-            errorCode = getObjCodeFormat3N4(ins, operand, fileBuf->address[cur], 0, operAdd, &output);
-            if(!errorCode) {
-                printf("%s\t%s\t%s\t\n", ins, operand, output);
-                printf("pcAdd: %03X operandAdd: %05X\n", fileBuf->address[cur]+3, operAdd);
-            }
-            else
-                printf("%s\t%s\tError:%d\n", ins, operand, errorCode);
-        }
-        else
-            printf("%s\t%s\tNot a format 3\n", ins, operand);
-    }
+    //     if(lineTest->numStrings == 1) {
+    //         ins = lineTest->stringArray[0];
+    //     }
+    //     else if(lineTest->numStrings == 2) {
+    //         ins = lineTest->stringArray[0];
+    //         operand = lineTest->stringArray[1];
+    //     }
+    //     else if(lineTest->numStrings==3) {
+    //         ins = lineTest->stringArray[1];
+    //         operand = lineTest->stringArray[2];
+    //     }
+    //     else {
+    //         printf("Got more than 3 string\n");
+    //     }
+    //     int operAdd = 0;
+    //     char* output = calloc(10, sizeof(char));
+    //     int errorCode = -1;
+    //     if(operand != NULL) {
+    //         operAdd= getAddress(symbolTable, stringSplit(removeFirstFlagLetter(operand), ",")->stringArray[0]);
+    //     }
+    //     if(getXeFormat(removeFirstFlagLetter(ins)) == 3) {
+    //         errorCode = getObjCodeFormat3N4(ins, operand, fileBuf->address[cur], 0, operAdd, &output);
+    //         if(!errorCode) {
+    //             printf("%s\t%s\t%s\t\n", ins, operand, output);
+    //             printf("pcAdd: %03X operandAdd: %05X\n", fileBuf->address[cur]+3, operAdd);
+    //         }
+    //         else
+    //             printf("%s\t%s\tError:%d\n", ins, operand, errorCode);
+    //     }
+    //     else
+    //         printf("%s\t%s\tNot a format 3\n", ins, operand);
+    // }
+
+    recordList* record = calloc(1, sizeof(recordList));
+    printf("%d\n",getTRecords(symbolTable, fileBuf, record));
+    printRecordTable(*record);
     return NULL;
 
     char *currentLine;
@@ -245,24 +249,78 @@ void removeCR(char *str) {
     str[i+1] = '\0';
 }
 
-void addTRecord(objectFile* objFile, int address, char *objcode, int *startingAddress, char *tRecordBuffer, bool combine) {
-    int length = strlen(tRecordBuffer);
-    if (combine) {
-        if (length == 0) {
-            (*startingAddress) = address;
+int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable) {
+    char TObjCode[61]="";
+    int startAdd = fileBuf->address[0];
+    int curAdd;
+    for(int x = 0; x < fileBuf->numLines; x++) {
+        printf("doing %s\n", fileBuf->lines[x]);
+        char* insOrDir;
+        char* operand;
+        char* curLine = fileBuf->lines[x];
+        struct stringArray* strArr = stringSplit(curLine, "\t\n");
+        
+        if(isspace(curLine[0])) {
+            insOrDir = strArr->stringArray[0];
+            operand = strArr->numStrings > 1 ? strArr->stringArray[1] : NULL;
         }
-        if (length + strlen(objcode) > 60) {
-            printTRecord(objFile, *startingAddress, tRecordBuffer);
-            *startingAddress = address;
+        else {
+            insOrDir = strArr->stringArray[1];
+            operand = strArr->numStrings > 2 ? strArr->stringArray[2] : NULL;
         }
-        strcat(tRecordBuffer, objcode);
-        objcode[0] = '\0';
-    } else {
-        if (length != 0) {
-            printTRecord(objFile, *startingAddress, tRecordBuffer);
+
+        //Instruction
+        if(!isDirective(insOrDir)) {
+            char* newObjCode = calloc(9, sizeof(char));
+            int errorCode;
+            curAdd = fileBuf->address[x];
+            int operAdd = 0;
+            if(operand != NULL) operAdd = getAddress(symbolTable, removeFirstFlagLetter(operand));
+            if(operAdd == -1) {
+                operAdd = getOperandNumber(operand);
+                if(operAdd == -1) {
+                    operAdd = getAddress(symbolTable,stringSplit(removeFirstFlagLetter(operand), ",")->stringArray[0]);
+                }
+            }
+            switch (getXeFormat(removeFirstFlagLetter(insOrDir))) {
+                case 1:
+                    continue; //TODO
+                    break;
+                case 2:
+                    continue; //TODO
+                    break;
+                case 3:
+                    //TODO, add base address
+                    errorCode = getObjCodeFormat3N4(insOrDir, operand, curAdd, 0, operAdd, &newObjCode);
+                    break;
+                default:
+                    printf("Error occured\n\n\n\n\n");
+                    break;
+            }
+            if(errorCode) return errorCode;
+
+            if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
+                strcat(TObjCode, newObjCode);
+                free(newObjCode);
+            }
+            else {
+                char* newRecord = calloc(70, sizeof(char));
+                sprintf(newRecord, "T%06X%02X%s", startAdd, curAdd-startAdd, TObjCode);
+                insertRecord(recordTable, newRecord);
+                startAdd = curAdd;
+                TObjCode[0] = '\0';
+                strcat(TObjCode, newObjCode);
+                free(newObjCode);
+            }
         }
-        printTRecord(objFile, address, objcode);
+
     }
+    char* newRecord = calloc(70, sizeof(char));
+    sprintf(newRecord, "T%06X%02X%s", startAdd, curAdd-startAdd, TObjCode);
+    insertRecord(recordTable, newRecord);
+
+
+    return 0;
 }
 void printTRecord(objectFile *objFile, int address, char *objcode) {
     int objCodeLength = strlen(objcode) / 2;
