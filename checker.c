@@ -73,7 +73,7 @@ bool containsValidCharacters(char *string) {
     }
     return true; 
 }
-const char *directives[] = {"START","END","BYTE","WORD","RESB","RESW","RESR","EXPORTS"};
+const char *directives[] = {"START","END","BYTE","WORD","RESB","RESW","RESR","EXPORTS","BASE"};
 /**
  * @brief Opcodes names & values in hexadecimal
   */
