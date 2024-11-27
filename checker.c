@@ -149,3 +149,13 @@ int getAddress(struct symbolTable* table, const char *symbol) {
     }
     return -1;
 }
+const char *registerNames[] = {"A", "X", "L", "B", "S", "T", "F", "PC", "SW"};
+const int[] registerValues = {REGISTER_A, REGISTER_X, REGISTER_L, REGISTER_B, REGISTER_S, REGISTER_T, REGISTER_F, REGISTER_PC, REGISTER_SW}
+int getRegisterNum(char *registerName) {
+    for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
+        if (!strcmp(registerNames[i], registerName)) {
+            return registerValues[i];
+        }
+    }
+    return -1;
+}
