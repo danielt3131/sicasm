@@ -22,4 +22,6 @@ int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int o
 int getTObjCode(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, char** output);
 long getWordNum(char* operand);
 char* createTRecord(int startAdd, char* Objcodes);
+int getObjCodeFormat1(char* ins, char** output);
+int getObjCodeFormat2(char* ins, char* operand, char** output);
 #endif
