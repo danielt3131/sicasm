@@ -16,6 +16,7 @@ int getRegisterNum(char *registerName);
 int getOpcodeValue(const char *opcode);
 #define NUMBER_OF_DIRECTIVES 9
 #define NUMBER_OF_OPCODES 59
+#define NUMBER_OF_XEOPCODES 33
 #define MAX_WORD_SIZE 1048575
 #define RAM_LIMIT 32767
 #define REGISTER_A  0
@@ -32,4 +33,5 @@ int getOpcodeValue(const char *opcode);
 bool containsValidCharacters(char *string);
 int getXeFormat(const char *opcode);
 int getAddress(struct symbolTable* table, const char *symbol);
+bool xeChecker(struct stringArray* split);
 #endif

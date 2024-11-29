@@ -9,12 +9,14 @@
 #include <stdlib.h>
 #include "fileBuffer.h"
 
+
+
 /**
  * @brief Creates a symbol table for the SIC architecture
  * @param fileBuf The file buffer of the assembly file
  * @return The pointer to the symbol table or NULL if there was an error
  */
-struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
+struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool *isXE) {
     char *currentLine;
     fileBuf->address = malloc(sizeof(int) * fileBuf->numLines);
     struct symbolTable *symbolTable = malloc(sizeof(struct symbolTable));
@@ -107,9 +109,9 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
                     seenEnd = true;
                     symbolTable->symbols[currentSymbol].address = address;
                 } 
-                 else if(strcmp(split->stringArray[1], "BASE") == 0) continue; 
-
-                 else {
+                 else if(strcmp(split->stringArray[1], "BASE") == 0) {
+                    continue;
+                } else {
                     symbolTable->symbols[currentSymbol].address = address;
                     int addressToAdd;
                     addressToAdd = getXeFormat(split->stringArray[1]);
@@ -132,16 +134,23 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
                 freeSymbolTable(symbolTable);
                 return NULL;
             }
+            if (!(*isXE)) {
+                *isXE = xeChecker(split);
+            }
             freeSplit(split);
             //puts("Created Symbol\n");
 
         } else { //I think this might not work if BYTE directive does not have a symbol
+            if (!(*isXE)) {
+                *isXE = xeChecker(split);
+            }
             int addressToAdd;
             addressToAdd = getXeFormat(split->stringArray[0]);
             if(addressToAdd == -1) return NULL;
             if(addressToAdd == 3)
                 addressToAdd = (split->stringArray[0][0] == '+') ? 4 : 3;
             address += addressToAdd;
+            freeSplit(split);
         }
         if (address > RAM_LIMIT) {
             freeSymbolTable(symbolTable);
@@ -158,5 +167,3 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
     */
     return symbolTable;
 }
-
-

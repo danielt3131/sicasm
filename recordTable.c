@@ -1,4 +1,6 @@
 #include "tables.h"
+#include "stdlib.h"
+#include "string.h"
 
 void printRecordTable(recordList table) {
     record* temp;
@@ -23,4 +25,17 @@ void insertRecord(recordList* table, char* r) {
         table->head = new;
         table->tail = new;
     }
+}
+
+
+void freeRecord(recordList* table) {
+    record* temp;
+    while(table->head != NULL) {
+        temp = table->head->next;
+        free(table->head->r);
+        free(table->head);
+        table->head = temp;
+    }
+
+    free(table);
 }
