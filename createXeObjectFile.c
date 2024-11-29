@@ -83,12 +83,16 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
 
             int operAdd = 0;
             if(operand != NULL && getXeFormat(insOrDir) != 2) operAdd = getOperAddress(symbolTable, operand);
-            if(operAdd == -1) return -1; //Error occur
-
+            if(operAdd == -1) {
+                freeSplit(strArr);
+                return -1; //Error occur
+            }
             int errorCode = getTObjCode(insOrDir, operand, curAdd, baseAdd, operAdd, &newObjCode);
 
-            if(errorCode) return errorCode;
-
+            if(errorCode) {
+                freeSplit(strArr);
+                return errorCode;
+            }
             if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
                 strcat(TObjCode, newObjCode);
                 free(newObjCode);
@@ -103,6 +107,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
             if(strcmp(insOrDir, "BASE") == 0) {
                 baseAdd = getOperAddress(symbolTable, operand);
                 printf("base: %d\n", baseAdd);
+                freeSplit(strArr);
                 continue;
             }
             else if(strcmp(insOrDir, "WORD") == 0) {
@@ -158,7 +163,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
             startAdd = nextStartAdd;
 
         }
-
+        freeSplit(strArr);
     }
     if(TObjCode[0] != '\0') {
         char* newRecord = createTRecord(startAdd, TObjCode);
@@ -224,6 +229,7 @@ int getObjCodeFormat2(char* ins, char* operand, char** output) {
 
     sprintf(*output, "%02X%01X%01X", opcode, reg1, reg2);
     printf("%s\n", *output);
+    freeSplit(split);
     return 0;
 }
 
