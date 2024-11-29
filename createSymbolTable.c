@@ -108,16 +108,24 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
                 } else if (!strcmp(split->stringArray[1], "END")) {
                     seenEnd = true;
                     symbolTable->symbols[currentSymbol].address = address;
-                } 
-                 else if(strcmp(split->stringArray[1], "BASE") == 0) {
+                } else if(strcmp(split->stringArray[1], "BASE") == 0) {
+                    freeSplit(split);
+                    symbolTable->symbols[currentSymbol].address = address;
+                    currentSymbol++;
+                    symbolTable->numberOfSymbols++;
+                    address = address + 3;
                     continue;
                 } else {
                     symbolTable->symbols[currentSymbol].address = address;
                     int addressToAdd;
                     addressToAdd = getXeFormat(split->stringArray[1]);
-                    if(addressToAdd == -1) return NULL;
-                    if(addressToAdd == 3)
+                    if(addressToAdd == -1) {
+                        freeSplit(split);
+                        return NULL;
+                    }
+                    if(addressToAdd == 3) {
                         addressToAdd = (split->stringArray[1][0] == '+') ? 4 : 3;
+                    }
                     address += addressToAdd;
                 }
                 currentSymbol++;
@@ -146,9 +154,13 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
             }
             int addressToAdd;
             addressToAdd = getXeFormat(split->stringArray[0]);
-            if(addressToAdd == -1) return NULL;
-            if(addressToAdd == 3)
+            if(addressToAdd == -1)  {
+                freeSplit(split);
+                return NULL;
+            }
+            if(addressToAdd == 3) {
                 addressToAdd = (split->stringArray[0][0] == '+') ? 4 : 3;
+            }
             address += addressToAdd;
             freeSplit(split);
         }
