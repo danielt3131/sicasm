@@ -47,12 +47,74 @@ recordList* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     //     else
     //         printf("%s\t%s\tNot a format 3\n", ins, operand);
     // }
+ 
+    // Variables to store program name, starting address, and program length
+    char *programName = NULL;
+    int startAddress = 0;
+    int programLength = 0;
+
+    // Parse the first line to get program name and start address
+    if (fileBuf->numLines > 0) {
+        char *firstLine = strdup(fileBuf->lines[0]); // Duplicate the first line to avoid modifying the original
+        char *token = strtok(firstLine, " \t\n"); // Tokenize by spaces, tabs, and newlines
+
+        // Get program name
+        if (token != NULL) {
+            programName = strdup(token); // Store the program name
+        }
+
+        // Get directive (should be "START")
+        token = strtok(NULL, " \t\n");
+        if (token != NULL && strcmp(token, "START") == 0) {
+            // Get starting address
+            token = strtok(NULL, " \t\n");
+            if (token != NULL) {
+                startAddress = (int)strtol(token, NULL, 16); // Convert from hex string to int
+            }
+        }
+        free(firstLine); // Free the duplicate line
+    }
+
+    // Calculate the program length
+    if (fileBuf->numLines > 0) {
+        int lastAddress = fileBuf->address[fileBuf->numLines - 1]; // Get the last address
+        programLength = lastAddress - startAddress;
+    }
+
+    // Create the record list for object file
     recordList *record = calloc(1, sizeof(recordList));
+
+    // Construct the header record
+    char *headerRecord = calloc(20, sizeof(char));
+    sprintf(headerRecord, "H%-6s%06X%06X", programName, startAddress, programLength);
+
+    // Insert the header record into the record list
+    insertRecord(record, headerRecord);
+
+    // Debug output to verify program name, starting address, and program length
+    if (programName != NULL) {
+        printf("Program Name: %s\n", programName);
+    }
+    printf("Start Address: %04X\n", startAddress);
+    printf("Program Length: %04X bytes\n", programLength);
+
+    // Generate text records (T-records)
     int error = getTRecords(symbolTable, fileBuf, record);
-    printf("%d\n", error);
+    if (error) {
+        fprintf(stderr, "Error generating text records: %d\n", error);
+    }
+
+    // Print all records (header and text records)
     printRecordTable(*record);
+
+    // Free the program name
+    free(programName);
+
     return record;
 }
+
+
+
 int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable) {
     char TObjCode[61]="";
     int startAdd = fileBuf->address[0];

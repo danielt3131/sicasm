@@ -75,4 +75,4 @@ void replaceWhitespace(char *str, int size) {
             str[i] = '\t';
         }
     }
-}
+} 
