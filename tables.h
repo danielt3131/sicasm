@@ -59,7 +59,7 @@ typedef struct recordList {
 
 struct stringArray* stringSplit(char *string, char *delim);
 void freeSymbolTable(struct symbolTable*);
-struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols);
+struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool *isXE);
 //struct symbolTable* createSymbolTable(FILE *file);
 void freeSplit(struct stringArray *split);
 void insertRecord(recordList* table, char* r);

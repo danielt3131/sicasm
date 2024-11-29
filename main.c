@@ -7,7 +7,8 @@
 #include <errno.h>
 #include "fileBuffer.h"
 #include "tables.h"
-#include "createObjectFile.h"
+#include "createXeObjectFile.h"
+#include "createSicObjectFile.h"
 #include "freeObjectFile.h"
 
 void printHelpMenu();
@@ -71,7 +72,8 @@ int main(int argc, char **argv) {
     /**
      * @brief Pass 1
      */
-    struct symbolTable *symbolTable = createSymbolTable(buffer, &numSymbols);
+    bool isXE = false;
+    struct symbolTable *symbolTable = createSymbolTable(buffer, &numSymbols, &isXE);
     if (symbolTable == NULL) {
         freeFileBuffer(buffer);
         //fclose(sourceFile);
@@ -94,7 +96,14 @@ int main(int argc, char **argv) {
     /**
      * Pass 2
      */
-    objectFile *objFile = createObjectFile(symbolTable, buffer);
+    if (isXE) {
+        recordList *record = createXeObjectFile(symbolTable, buffer);
+        freeFileBuffer(buffer);
+        freeSymbolTable(symbolTable);
+        return EXIT_SUCCESS;
+    }
+    objectFile *objFile = createSicObjectFile(symbolTable, buffer);
+
     freeFileBuffer(buffer);
     //fclose(sourceFile);
     if (objFile == NULL) {

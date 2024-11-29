@@ -1,5 +1,5 @@
 /**
- * @author Daniel J. Thompson (N01568044)
+ * @author Tianyu Wu
  */
 #ifndef XEOBJCODECREATE_H
 #define XEOBJCODECREATE_H

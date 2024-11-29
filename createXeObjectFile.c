@@ -1,13 +1,11 @@
 /**
- * @author Daniel J. Thompson (N01568044)
- * SPDX-License-Identifier: GPL-2.0-or-later
+ * @author Tianyu Wu
  */
 #include "createXeObjectFile.h"
 #include <string.h>
 #include <stdlib.h>
 #include "tables.h"
 #include "checker.h"
-#include "freeObjectFile.h"
 #include <ctype.h>
 #include "fileBuffer.h"
 

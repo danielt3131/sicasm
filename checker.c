@@ -159,3 +159,69 @@ int getRegisterNum(char *registerName) {
     }
     return -1;
 }
+
+const char *xeOpcodes[] = {"ADDF", "ADDR", "CLEAR", "COMPF", "COMPR", "DIVF", "DIVR", "FIX",
+   "FLOAT", "HIO", "LDB", "LDF", "LDS", "LDT", "LPS", "MULF", "MULR", "NORM",
+   "RMO", "SHIFTL", "SHIFTR", "SIO", "SSK", "STB", "STF", "STI", "STS", "STT",
+   "SUBF", "SUBR", "SVC", "TIO", "TIXR"};
+
+/**
+ * Determines if the opcode or operand is using xe features
+ * Used in createSymbolTable() to set a flag used in main to determine which createObjectCode functions to use
+ * @param opcode
+ * @param operand
+ * @return True if it is XE
+ */
+bool xeChecker(struct stringArray* split) {
+    // Address modes
+    char *opcode;
+    char *operand;
+    if (split->numStrings >= 2) {
+        if (split->numStrings == 3) {
+            opcode = split->stringArray[1];
+            operand = split->stringArray[2];
+        } else {
+            opcode = split->stringArray[0];
+            operand = split->stringArray[1];
+        }
+        if (opcode[0] == '#' || operand[0] == '#') {
+            return true;
+        }
+        if (opcode[0] == '@' || operand[0] == '@') {
+            return true;
+        }
+        if (opcode[0] == '+' || operand[0] == '+') {
+            return true;
+        }
+        if (opcode[0] == '*' || operand[0] == '*') {
+            return true;
+        }
+        // Test opcodes
+        for (int i = 0; i < NUMBER_OF_XEOPCODES; i++) {
+            if (!strcmp(opcode, xeOpcodes[i])) {
+                return true;
+            }
+        }
+    } else {
+        opcode = split->stringArray[0];
+        if (opcode[0] == '#') {
+            return true;
+        }
+        if (opcode[0] == '@') {
+            return true;
+        }
+        if (opcode[0] == '+') {
+            return true;
+        }
+        if (opcode[0] == '*') {
+            return true;
+        }
+        // Test opcodes
+        for (int i = 0; i < NUMBER_OF_XEOPCODES; i++) {
+            if (!strcmp(opcode, xeOpcodes[i])) {
+                return true;
+            }
+        }
+    }
+    return false;
+}

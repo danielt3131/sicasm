@@ -1,4 +1,6 @@
 #include "tables.h"
+#include "stdlib.h"
+#include "string.h"
 
 void printRecordTable(recordList table) {
     record* temp;
