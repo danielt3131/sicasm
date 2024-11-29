@@ -30,12 +30,12 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
     bool seenEnd = false;
     for (int i = 0; i < fileBuf->numLines; i++) {
         currentLine = fileBuf->lines[i];
+        lineNumber = fileBuf->lineNumbers[i];
         if (currentLine[0] == '\n' && !seenEnd) {
             freeSymbolTable(symbolTable);
             fprintf(stderr, "Whitespace found at Line %d\n", lineNumber);
             return NULL;
         }
-        lineNumber = fileBuf->lineNumbers[i];
         struct stringArray *split = stringSplit(currentLine, "\t\n");
         if (!isspace(currentLine[0])) {
             /*
