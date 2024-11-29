@@ -64,4 +64,5 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
 void freeSplit(struct stringArray *split);
 void insertRecord(recordList* table, char* r);
 void printRecordTable(recordList table);
+void freeRecord(recordList* table);
 #endif

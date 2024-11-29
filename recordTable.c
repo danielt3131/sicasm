@@ -26,3 +26,16 @@ void insertRecord(recordList* table, char* r) {
         table->tail = new;
     }
 }
+
+
+void freeRecord(recordList* table) {
+    record* temp;
+    while(table->head != NULL) {
+        temp = table->head->next;
+        free(table->head->r);
+        free(table->head);
+        table->head = temp;
+    }
+
+    free(table);
+}

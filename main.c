@@ -95,11 +95,17 @@ int main(int argc, char **argv) {
     //rewind(sourceFile);
     /**
      * Pass 2
+     * If isXE is true then handle
      */
     if (isXE) {
         recordList *record = createXeObjectFile(symbolTable, buffer);
+        if (record == NULL) {
+            freeFileBuffer(buffer);
+            freeSymbolTable(symbolTable);
+        }
         freeFileBuffer(buffer);
         freeSymbolTable(symbolTable);
+        freeRecord(record);
         return EXIT_SUCCESS;
     }
     objectFile *objFile = createSicObjectFile(symbolTable, buffer);
