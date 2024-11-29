@@ -21,7 +21,7 @@ struct stringArray* stringSplit(char *string, char *delim) {
         }
         if (split->numStrings >= split->allocatedAmount) {
             split->allocatedAmount = split->allocatedAmount * 2;
-            split->stringArray = realloc(split->stringArray, split->allocatedAmount);
+            split->stringArray = realloc(split->stringArray, split->allocatedAmount * sizeof(char *));
         }
         split->stringArray[split->numStrings] = malloc(strlen(splitTemp) + 1);
         strcpy(split->stringArray[split->numStrings], splitTemp);
