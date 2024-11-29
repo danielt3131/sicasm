@@ -62,7 +62,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
         printf("doing %s\n", fileBuf->lines[x]);
         char* insOrDir;
         char* operand;
-        char* newObjCode;
+        char* newObjCode = NULL;
         char* curLine = fileBuf->lines[x];
         int curAdd = fileBuf->address[x];
         int nextStartAdd = fileBuf->address[x-1];
@@ -85,12 +85,14 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
             if(operand != NULL && getXeFormat(insOrDir) != 2) operAdd = getOperAddress(symbolTable, operand);
             if(operAdd == -1) {
                 freeSplit(strArr);
+                free(newObjCode);
                 return -1; //Error occur
             }
             int errorCode = getTObjCode(insOrDir, operand, curAdd, baseAdd, operAdd, &newObjCode);
 
             if(errorCode) {
                 freeSplit(strArr);
+                free(newObjCode);
                 return errorCode;
             }
             if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
@@ -136,7 +138,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
                     strcat(TObjCode, temp);
                     byteAdded = strlen(temp) /2;
                     free(temp);
-                    
+
                     if(strlen(TObjCode) >= 60) {
                         char* newRecord = createTRecord(startAdd, TObjCode);
                         insertRecord(recordTable, newRecord);
@@ -155,8 +157,11 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
                 char* newRecord = createTRecord(startAdd, TObjCode);
                 insertRecord(recordTable, newRecord);
                 TObjCode[0] = '\0';
-                if(newObjCode != NULL) strcat(TObjCode, newObjCode);
-                free(newObjCode);
+                if(newObjCode != NULL) {
+                    strcat(TObjCode, newObjCode);
+                    free(newObjCode);
+                }
+
                 newObjCode = NULL;
             }
             needNewRecord = 0;
