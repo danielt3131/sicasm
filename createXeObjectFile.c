@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include "fileBuffer.h"
 
-recordList* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf) {
+objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf) {
     // for(int cur = 0; cur < fileBuf->numLines; cur++) {
     //     struct stringArray* lineTest = stringSplit(fileBuf->lines[cur], "\t\n");
     //     char* ins = NULL;
@@ -47,13 +47,24 @@ recordList* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     //     else
     //         printf("%s\t%s\tNot a format 3\n", ins, operand);
     // }
+    objectFile* objFile = malloc(sizeof(objectFile));
+    char buffer[40];
+    sprintf(buffer, "H%-6s%06X%06X\n", symbolTable->symbols[0].name, symbolTable->symbols[0].address, symbolTable->symbols[symbolTable->numberOfSymbols - 1].address - symbolTable->symbols[0].address);
+    objFile->hRecord = malloc(strlen(buffer) + 1);
+    strcpy(objFile->hRecord, buffer);
     recordList *record = calloc(1, sizeof(recordList));
-    int error = getTRecords(symbolTable, fileBuf, record);
-    printf("%d\n", error);
-    printRecordTable(*record);
-    return record;
+    int firstExecInstructionAddress;
+    int error = getTRecords(symbolTable, fileBuf, record, &firstExecInstructionAddress);
+    //printf("%d\n", error);
+    objFile->tRecords = printRecordTable(*record);
+    objFile->eRecord = malloc(8);
+    sprintf(objFile->eRecord,  "E%06X\n", firstExecInstructionAddress);
+    freeRecord(record);
+    //return record;
+    return objFile;
 }
-int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable) {
+int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable, int *firstExecInstructionAddress) {
+    bool firstExecInstruction = false;
     char TObjCode[61]="";
     int startAdd = fileBuf->address[0];
     int baseAdd = 0;
@@ -79,6 +90,10 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
 
         //Instruction
         if(!isDirective(insOrDir)) {
+            if (!firstExecInstruction) {
+                firstExecInstruction = true;
+                *firstExecInstructionAddress = fileBuf->address[x - 1]; // The previous address
+            }
             newObjCode = calloc(9, sizeof(char));
 
             int operAdd = 0;

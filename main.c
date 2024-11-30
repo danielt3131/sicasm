@@ -97,23 +97,17 @@ int main(int argc, char **argv) {
      * Pass 2
      * If isXE is true then handle
      */
+    objectFile *objFile;
     if (isXE) {
-        recordList *record = createXeObjectFile(symbolTable, buffer);
-        if (record == NULL) {
-            freeFileBuffer(buffer);
-            freeSymbolTable(symbolTable);
-        }
-        freeFileBuffer(buffer);
-        freeSymbolTable(symbolTable);
-        freeRecord(record);
-        return EXIT_SUCCESS;
+        objFile = createXeObjectFile(symbolTable, buffer);
+    } else {
+        objFile = createSicObjectFile(symbolTable, buffer);
     }
-    objectFile *objFile = createSicObjectFile(symbolTable, buffer);
 
     freeFileBuffer(buffer);
     //fclose(sourceFile);
     if (objFile == NULL) {
-        //freeFileBuffer(buffer);
+        freeSymbolTable(symbolTable);
         return EXIT_FAILURE;
     }
 
@@ -147,8 +141,10 @@ int main(int argc, char **argv) {
         fprintf(outputFile, "%s", objFile->tRecords->stringArray[i]);
     }
     fprintf(outputFile, "%s", objFile->eRecord);
-    for (int i = 0; i < objFile->mRecords->numStrings; i++) {
-        fprintf(outputFile, "%s", objFile->mRecords->stringArray[i]);
+    if (objFile->mRecords->numStrings > 0) {
+        for (int i = 0; i < objFile->mRecords->numStrings; i++) {
+            fprintf(outputFile, "%s", objFile->mRecords->stringArray[i]);
+        }
     }
     if (!printMode) {
         fclose(outputFile);

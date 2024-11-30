@@ -2,13 +2,27 @@
 #include "stdlib.h"
 #include "string.h"
 
-void printRecordTable(recordList table) {
+struct stringArray* printRecordTable(recordList table) {
+    struct stringArray* array = malloc(sizeof(struct stringArray));
+    array->numStrings = 0;
+    array->allocatedAmount = 4;
+    array->stringArray = malloc(array->allocatedAmount * sizeof(char *));
     record* temp;
     temp = table.head;
+    int i = 0;
     while(temp != NULL)   {
-        printf("%s\n", temp->r);
+        if (array->numStrings >= array->allocatedAmount) {
+            array->allocatedAmount *= 2;
+            array->stringArray = realloc(array->stringArray, array->allocatedAmount * sizeof(char *));
+        }
+        array->stringArray[i] = malloc(61);
+
+        sprintf(array->stringArray[i], "%s\n", temp->r);
         temp = temp->next;
+        i++;
+        array->numStrings++;
     }
+    return array;
 }
 
 void insertRecord(recordList* table, char* r) {

@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "tables.h"
-recordList* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf);
-int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable);
+objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf);
+int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable,int *firstExecInstructionAddress);
 char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output);
 int opAndFlagsBit(int opcode, int n, int i, int x, int b, int p, int e);
 int getOperandNumber(char* operand);
