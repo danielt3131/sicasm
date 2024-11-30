@@ -20,4 +20,6 @@ int getOperAddress(struct symbolTable *symbolTable, char* operand);
 char* createTRecord(int startAdd, char* Objcodes);
 int getObjCodeFormat1(char* ins, char** output);
 int getObjCodeFormat2(char* ins, char* operand, char** output);
+int validateXeInsFormat(struct symbolTable* symbolTable, char* ins, char* operand);
+void errorOutput(int lineNum, char* insOrDir, char* operand, int errorCode);
 #endif
