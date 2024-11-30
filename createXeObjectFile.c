@@ -10,45 +10,9 @@
 #include "fileBuffer.h"
 
 recordList* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf) {
-    // for(int cur = 0; cur < fileBuf->numLines; cur++) {
-    //     struct stringArray* lineTest = stringSplit(fileBuf->lines[cur], "\t\n");
-    //     char* ins = NULL;
-    //     char* operand = NULL;
-
-    //     if(lineTest->numStrings == 1) {
-    //         ins = lineTest->stringArray[0];
-    //     }
-    //     else if(lineTest->numStrings == 2) {
-    //         ins = lineTest->stringArray[0];
-    //         operand = lineTest->stringArray[1];
-    //     }
-    //     else if(lineTest->numStrings==3) {
-    //         ins = lineTest->stringArray[1];
-    //         operand = lineTest->stringArray[2];
-    //     }
-    //     else {
-    //         printf("Got more than 3 string\n");
-    //     }
-    //     int operAdd = 0;
-    //     char* output = calloc(10, sizeof(char));
-    //     int errorCode = -1;
-    //     if(operand != NULL) {
-    //         operAdd= getAddress(symbolTable, stringSplit(removeFirstFlagLetter(operand), ",")->stringArray[0]);
-    //     }
-    //     if(getXeFormat(removeFirstFlagLetter(ins)) == 3) {
-    //         errorCode = getObjCodeFormat3N4(ins, operand, fileBuf->address[cur], 0, operAdd, &output);
-    //         if(!errorCode) {
-    //             printf("%s\t%s\t%s\t\n", ins, operand, output);
-    //             printf("pcAdd: %03X operandAdd: %05X\n", fileBuf->address[cur]+3, operAdd);
-    //         }
-    //         else
-    //             printf("%s\t%s\tError:%d\n", ins, operand, errorCode);
-    //     }
-    //     else
-    //         printf("%s\t%s\tNot a format 3\n", ins, operand);
-    // }
     recordList *record = calloc(1, sizeof(recordList));
     int error = getTRecords(symbolTable, fileBuf, record);
+    printf("%d\n",error);
     printRecordTable(*record);
     return record;
 }
@@ -104,7 +68,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
             }
             else if(strcmp(insOrDir, "WORD") == 0) {
                 newObjCode = calloc(7, sizeof(char));
-                sprintf(newObjCode, "%06X", getWordNum(operand));
+                sprintf(newObjCode, "%06X", (unsigned int) getWordNum(operand));
                 if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
                     strcat(TObjCode, newObjCode);
                     free(newObjCode);
@@ -258,7 +222,7 @@ int opAndFlagsBit(int opcode, int n, int i, int x, int b, int p, int e) {
  * allowHexLen: Maximum length allowed
  * output: result will store in this
  */
-char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output) {
+char* getJustEnoughByteHex(char* str, char mode, unsigned int allowHexLen, char** output) {
   if(allowHexLen%2 != 0) return str; //please make sure allowHexLen is even
 
 
@@ -364,7 +328,6 @@ char* removeFirstFlagLetter(char* str) {
 int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, char** output) {
     int n = 0, i = 0, x = 0, b = 0, p = 0, e = 0;    
     int errorCode = getFlagsInfo(ins, operand, curAdd, operAdd, baseAdd, &n, &i, &x, &b, &p, &e);
-    int length = (e == 1) ? 4 : 3;
     if(!errorCode) {
         int upper3Hex = opAndFlagsBit(getOpcodeValue(removeFirstFlagLetter(ins)), n, i, x, b, p, e);
         int lowerHex = operAdd;
@@ -407,3 +370,4 @@ int getOperAddress(struct symbolTable *symbolTable, char* operand) {
 
     return getAddress(symbolTable, operand);
 }
+

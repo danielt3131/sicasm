@@ -8,7 +8,7 @@
 #include "tables.h"
 recordList* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf);
 int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable);
-char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output);
+char* getJustEnoughByteHex(char* str, char mode, unsigned int allowHexLen, char** output);
 int opAndFlagsBit(int opcode, int n, int i, int x, int b, int p, int e);
 int getOperandNumber(char* operand);
 int getFlagsInfo(char* ins, char* operand, int curAdd, int operAdd, int baseAdd, int* n, int* i, int* x, int* b, int* p, int* e);
