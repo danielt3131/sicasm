@@ -29,6 +29,7 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
     bool seenStart = false;
     bool seenEnd = false;
     for (int i = 0; i < fileBuf->numLines; i++) {
+        fileBuf->address[i] = address;
         currentLine = fileBuf->lines[i];
         lineNumber = fileBuf->lineNumbers[i];
         if (currentLine[0] == '\n' && !seenEnd) {
@@ -113,7 +114,7 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
                     symbolTable->symbols[currentSymbol].address = address;
                     currentSymbol++;
                     symbolTable->numberOfSymbols++;
-                    address = address + 3;
+                   // address = address + 3;
                     continue;
                 } else {
                     if(!isOpcode(split->stringArray[1])) {
@@ -192,7 +193,6 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
             fprintf(stderr, "SIC memory exhausted tried to use %x at line %d when the limit is 7FFF\n", address, lineNumber);
             return NULL;
         }
-        fileBuf->address[i] = address;
         //printf("%s \t %X\n", currentLine, address);
         //lineNumber++;
     }
