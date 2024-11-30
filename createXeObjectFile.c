@@ -1,5 +1,7 @@
 /**
  * @author Tianyu Wu
+ * @author Samuel Gray
+ * @author Daniel J. Thompson (N01568044)
  */
 #include "createXeObjectFile.h"
 #include <string.h>

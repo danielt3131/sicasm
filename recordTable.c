@@ -1,3 +1,7 @@
+/**
+ * @author Tianyu Wu
+ * @author Daniel J. Thompson (N01568044)
+ */
 #include "tables.h"
 #include "stdlib.h"
 #include "string.h"
