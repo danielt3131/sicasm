@@ -152,16 +152,27 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
             if (!(*isXE)) {
                 *isXE = xeChecker(split);
             }
-            int addressToAdd;
-            addressToAdd = getXeFormat(split->stringArray[0]);
-            if(addressToAdd == -1)  {
+            if(strcmp(split->stringArray[0], "BASE") == 0) {
                 freeSplit(split);
-                return NULL;
+                continue;
+            } else if(strcmp(split->stringArray[0], "END") == 0) {
+                seenEnd = true;
+            } else if (strcmp(split->stringArray[0], "RESW") == 0) {
+                address = address + (atoi(split->stringArray[1]) * 3);
+            } else if (strcmp(split->stringArray[0], "RESB") == 0) {
+                address = address + atoi(split->stringArray[1]);
+            } else {
+                int addressToAdd;
+                addressToAdd = getXeFormat(split->stringArray[0]);
+                if(addressToAdd == -1) {
+                    freeSplit(split);
+                    return NULL;
+                }
+                if(addressToAdd == 3) {
+                    addressToAdd = (split->stringArray[0][0] == '+') ? 4 : 3;
+                }
+                address += addressToAdd;
             }
-            if(addressToAdd == 3) {
-                addressToAdd = (split->stringArray[0][0] == '+') ? 4 : 3;
-            }
-            address += addressToAdd;
             freeSplit(split);
         }
         if (address > RAM_LIMIT) {

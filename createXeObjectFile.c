@@ -125,7 +125,6 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
     int baseAdd = 0;
     int needNewRecord = 0; //Flag for going to next T-record
     for(int x = 1; x < fileBuf->numLines-1; x++) {
-        printf("doing %s\n", fileBuf->lines[x]);
         char* insOrDir;
         char* operand;
         char* newObjCode = NULL;
@@ -178,7 +177,6 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
         else {
             if(strcmp(insOrDir, "BASE") == 0) {
                 baseAdd = getOperAddress(symbolTable, operand);
-                printf("base: %d\n", baseAdd);
                 freeSplit(strArr);
                 continue;
             }
@@ -303,7 +301,6 @@ int getObjCodeFormat2(char* ins, char* operand, char** output) {
     if(reg1 == -1 || reg2 == -1) return -1;
 
     sprintf(*output, "%02X%01X%01X", opcode, reg1, reg2);
-    printf("%s\n", *output);
     freeSplit(split);
     return 0;
 }
@@ -401,7 +398,6 @@ int getFlagsInfo(char* ins, char* operand, int curAdd, int operAdd, int baseAdd,
     if(!operand) return 0; //When no operand, no b or p is needed
     if(getOperandNumber(operand) != -1) return 0; //If is a immediate integer, no b or p is needed
 
-    printf("Base: %d operADD: %d\n",baseAdd, operAdd);
     int pcAdd = curAdd + 3; //At this point, it can only be format 3, so pc register is 3 byte next.
     if((operAdd - pcAdd >= -2048) && (operAdd - pcAdd <= 2047)) {
         *p = 1;
