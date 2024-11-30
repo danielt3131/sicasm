@@ -116,6 +116,12 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
                     address = address + 3;
                     continue;
                 } else {
+                    if(!isOpcode(split->stringArray[1])) {
+                        fprintf(stderr, "Line: %d - Invalid instruction\n%s\n", i+1, split->stringArray[1]);
+                        freeSplit(split);
+                        freeSymbolTable(symbolTable);
+                        return NULL;
+                    }
                     symbolTable->symbols[currentSymbol].address = address;
                     int addressToAdd;
                     addressToAdd = getXeFormat(split->stringArray[1]);
@@ -162,6 +168,12 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
             } else if (strcmp(split->stringArray[0], "RESB") == 0) {
                 address = address + atoi(split->stringArray[1]);
             } else {
+                if(!isOpcode(split->stringArray[0])) {
+                    fprintf(stderr, "Line: %d - Invalid instruction\n", i+1);
+                    freeSplit(split);
+                    freeSymbolTable(symbolTable);
+                    return NULL;
+                }
                 int addressToAdd;
                 addressToAdd = getXeFormat(split->stringArray[0]);
                 if(addressToAdd == -1) {

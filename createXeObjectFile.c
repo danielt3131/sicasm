@@ -124,6 +124,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
     int startAdd = fileBuf->address[0];
     int baseAdd = 0;
     int needNewRecord = 0; //Flag for going to next T-record
+    int errorCode = 0;
     for(int x = 1; x < fileBuf->numLines-1; x++) {
         char* insOrDir;
         char* operand;
@@ -148,6 +149,12 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
                 firstExecInstruction = true;
                 *firstExecInstructionAddress = fileBuf->address[x - 1]; // The previous address
             }
+            errorCode = validateXeInsFormat(symbolTable, insOrDir, operand);
+            if(errorCode) {
+                errorOutput(x+1, insOrDir, operand, errorCode);
+                return errorCode;
+            }
+
             newObjCode = calloc(9, sizeof(char));
 
             int operAdd = 0;
@@ -157,13 +164,15 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
                 free(newObjCode);
                 return -1; //Error occur
             }
-            int errorCode = getTObjCode(insOrDir, operand, curAdd, baseAdd, operAdd, &newObjCode);
+            errorCode = getTObjCode(insOrDir, operand, curAdd, baseAdd, operAdd, &newObjCode);
 
             if(errorCode) {
                 freeSplit(strArr);
                 free(newObjCode);
+                errorOutput(x+1, insOrDir, operand, errorCode);
                 return errorCode;
             }
+
             if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
                 strcat(TObjCode, newObjCode);
                 free(newObjCode);
@@ -182,7 +191,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
             }
             else if(strcmp(insOrDir, "WORD") == 0) {
                 newObjCode = calloc(7, sizeof(char));
-                sprintf(newObjCode, "%06X", getWordNum(operand));
+                sprintf(newObjCode, "%06X", (unsigned int) getWordNum(operand));
                 if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
                     strcat(TObjCode, newObjCode);
                     free(newObjCode);
@@ -340,7 +349,7 @@ int opAndFlagsBit(int opcode, int n, int i, int x, int b, int p, int e) {
  * allowHexLen: Maximum length allowed
  * output: result will store in this
  */
-char* getJustEnoughByteHex(char* str, char mode, int allowHexLen, char** output) {
+char* getJustEnoughByteHex(char* str, char mode, unsigned int allowHexLen, char** output) {
   if(allowHexLen%2 != 0) return str; //please make sure allowHexLen is even
 
 
@@ -446,7 +455,6 @@ char* removeFirstFlagLetter(char* str) {
 int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, char** output) {
     int n = 0, i = 0, x = 0, b = 0, p = 0, e = 0;    
     int errorCode = getFlagsInfo(ins, operand, curAdd, operAdd, baseAdd, &n, &i, &x, &b, &p, &e);
-    int length = (e == 1) ? 4 : 3;
     if(!errorCode) {
         int upper3Hex = opAndFlagsBit(getOpcodeValue(removeFirstFlagLetter(ins)), n, i, x, b, p, e);
         int lowerHex = operAdd;
@@ -488,4 +496,73 @@ int getOperAddress(struct symbolTable *symbolTable, char* operand) {
     }
 
     return getAddress(symbolTable, operand);
+}
+
+int validateXeInsFormat(struct symbolTable* symbolTable, char* ins, char* operand) {
+    int format = getXeFormat(ins);
+    if(format == -1) return 10; //Invalid instruction or flag indicator ;
+
+    if(format != 3 && *ins == '+') return 11; //Flag indicator + are only allowed for format 3 and 4
+
+    if(format == 1 || strcmp(removeFirstFlagLetter(ins), "RSUB") == 0)
+        return (operand == NULL) ? 0 : 12;  //Operand not allowed for those format
+
+    if(operand == NULL) return 13; //Missing operand
+
+    if(format == 2) {
+        struct stringArray* split = stringSplit(operand, ",");
+        if(split->numStrings > 2) return 14; //format 2 allow maximum of 2 register
+        int reg1 = 0, reg2 = 0;
+
+        reg1 = getRegisterNum(split->stringArray[0]);
+
+        if(split->numStrings > 1) reg2 = getRegisterNum(split->stringArray[1]);
+
+        freeSplit(split);
+        if(reg1 == -1 || reg2 == -1) return 15; //Invalid register
+    }
+
+    if(format == 3) {
+        struct stringArray* split = stringSplit(operand, "\t\n");
+        if(split->numStrings > 1) return 16; //Multiple operand not allow
+        int address = getOperAddress(symbolTable, operand);
+        if (address == -1) return 17; // Operand not in the symbol table
+    }
+
+    return 0;
+}
+
+void errorOutput(int lineNum, char* insOrDir, char* operand, int errorCode) {
+    switch (errorCode) {
+        case 10:
+            printf("Line: %d - %s is a invalid instruction\n", lineNum, insOrDir);
+            break;
+        case 11:
+            printf("Line: %d - %s instruction does not support format 4\n", lineNum, insOrDir);
+            break;
+        case 12:
+            printf("Line: %d - %s instruction does not allow operand\n", lineNum, insOrDir);
+            break;
+        case 13:
+            printf("Line: %d - %s instruction missing operand(s)\n", lineNum, insOrDir);
+            break;
+        case 14:
+            printf("Line: %d - %s instruction only allow a maximum of 2 input register\n", lineNum, insOrDir);
+            break;
+        case 15:
+            printf("Line: %d - %s instruction contain invalid register name\n", lineNum, insOrDir);
+            break;
+        case 16:
+            printf("Line: %d - %s instruction does not allow multiple operand\n", lineNum, insOrDir);
+            break;
+        case 17:
+            printf("Line: %d - %s does not exist in the symbol table\n", lineNum, operand);
+            break;
+        case 21:
+            printf("Line: %d - %s contain mutiple addressing mode\n", lineNum, operand); //This might never run
+            break;
+        case 22:
+            printf("Line: %d - displacement to %s does not fit within 12 bits, please use format 4 or use a different base address\n", lineNum, operand);
+
+    }
 }
