@@ -85,7 +85,7 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     }
     // Construct the header record and add to objectFile*
     objFile->hRecord = calloc(20, sizeof(char));
-    sprintf(objFile->hRecord, "H%-6s%06X%06X", programName, startAddress, programLength);
+    sprintf(objFile->hRecord, "H%-6s%06X%06X\n", programName, startAddress, programLength);
 
     // Debug output to verify program name, starting address, and program length
     if (programName != NULL) {
@@ -95,13 +95,13 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     printf("Program Length: %04X bytes\n", programLength);
 
     // Create the record list for object file
-    recordList *record = calloc(1, sizeof(recordList));
-
+    recordList *tRecord = calloc(1, sizeof(recordList));
+    recordList *mRecord = calloc(1, sizeof(recordList));
 
     // Generate text records (T-records)
 
     int firstExecInstructionAddress;
-    int error = getTRecords(symbolTable, fileBuf, record, &firstExecInstructionAddress);
+    int error = getTAndMRecords(symbolTable, fileBuf, tRecord, mRecord, programName, &firstExecInstructionAddress);
     if (error) {
         fprintf(stderr, "Error generating text records: %d\n", error);
     }
@@ -109,16 +109,16 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     free(programName);
 
     //printf("%d\n", error);
-    objFile->tRecords = printRecordTable(*record);
+    objFile->tRecords = printRecordTable(*tRecord);
     objFile->eRecord = malloc(10);
-    objFile->mRecords = malloc(sizeof(struct stringArray));
-    objFile->mRecords->numStrings = 0;
+    objFile->mRecords = printRecordTable(*mRecord);
     sprintf(objFile->eRecord,  "E%06X\n", firstExecInstructionAddress);
-    freeRecord(record);
+    freeRecord(tRecord);
+    freeRecord(mRecord);
     //return record;
     return objFile;
 }
-int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* recordTable, int *firstExecInstructionAddress) {
+int getTAndMRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList* tRecordTable, recordList* mRecordTable, char* programName, int *firstExecInstructionAddress) {
     bool firstExecInstruction = false;
     char TObjCode[61]="";
     int startAdd = fileBuf->address[0];
@@ -131,7 +131,10 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
         char* newObjCode = NULL;
         char* curLine = fileBuf->lines[x];
         int curAdd = fileBuf->address[x];
-        int nextStartAdd = fileBuf->address[x-1];
+        int nextStartAdd = curAdd;
+        int requireMRecord = 0;
+        printf("%X %s\n", curAdd, fileBuf->lines[x]);
+
         struct stringArray* strArr = stringSplit(curLine, "\t\n");
         
         if(isspace(curLine[0])) {
@@ -164,13 +167,18 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
                 free(newObjCode);
                 return -1; //Error occur
             }
-            errorCode = getTObjCode(insOrDir, operand, curAdd, baseAdd, operAdd, &newObjCode);
+            errorCode = getTObjCode(insOrDir, operand, curAdd, baseAdd, operAdd, &requireMRecord, &newObjCode);
 
             if(errorCode) {
                 freeSplit(strArr);
                 free(newObjCode);
                 errorOutput(x+1, insOrDir, operand, errorCode);
                 return errorCode;
+            }
+
+            if(requireMRecord) {
+                char* newR = getMObjCode(curAdd, programName);
+                insertRecord(mRecordTable, newR);
             }
 
             if(strlen(TObjCode) + strlen(newObjCode) <= 60) {
@@ -202,7 +210,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
             }
             else if(strcmp(insOrDir, "RESW") == 0 || strcmp(insOrDir, "RESB") == 0) {
                 needNewRecord =1;
-                nextStartAdd = fileBuf->address[x];
+                nextStartAdd = fileBuf->address[x+1];
             }
             else if(strcmp(insOrDir, "BYTE") == 0) {
                 char mode = *operand;
@@ -218,7 +226,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
 
                     if(strlen(TObjCode) >= 60) {
                         char* newRecord = createTRecord(startAdd, TObjCode);
-                        insertRecord(recordTable, newRecord);
+                        insertRecord(tRecordTable, newRecord);
                         nextStartAdd+=byteAdded;
                         startAdd = nextStartAdd;
                         TObjCode[0] = '\0';
@@ -232,7 +240,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
         if(needNewRecord) {
             if(TObjCode[0] != '\0'){
                 char* newRecord = createTRecord(startAdd, TObjCode);
-                insertRecord(recordTable, newRecord);
+                insertRecord(tRecordTable, newRecord);
                 TObjCode[0] = '\0';
                 if(newObjCode != NULL) {
                     strcat(TObjCode, newObjCode);
@@ -249,7 +257,7 @@ int getTRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, recordList
     }
     if(TObjCode[0] != '\0') {
         char* newRecord = createTRecord(startAdd, TObjCode);
-        insertRecord(recordTable, newRecord);
+        insertRecord(tRecordTable, newRecord);
     }
 
 
@@ -270,7 +278,7 @@ long getWordNum(char* operand) {
     return num;
 }
 
-int getTObjCode(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, char** output) {
+int getTObjCode(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, int* requireMRecord, char** output) {
     int errorCode = 0;
     switch(getXeFormat(ins)) {
         case 1:
@@ -280,7 +288,7 @@ int getTObjCode(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, 
             errorCode = getObjCodeFormat2(ins, operand, output);
             break;
         case 3:
-            errorCode = getObjCodeFormat3N4(ins, operand, curAdd, baseAdd, operAdd, output);
+            errorCode = getObjCodeFormat3N4(ins, operand, curAdd, baseAdd, operAdd, requireMRecord, output);
             break;
         default:
             printf("Error occur\n");
@@ -452,24 +460,28 @@ char* removeFirstFlagLetter(char* str) {
     return str;
 }
 
-int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, char** output) {
+int getObjCodeFormat3N4(char* ins, char* operand, int curAdd, int baseAdd, int operAdd, int* requireMRecord, char** output) {
     int n = 0, i = 0, x = 0, b = 0, p = 0, e = 0;    
     int errorCode = getFlagsInfo(ins, operand, curAdd, operAdd, baseAdd, &n, &i, &x, &b, &p, &e);
     if(!errorCode) {
         int upper3Hex = opAndFlagsBit(getOpcodeValue(removeFirstFlagLetter(ins)), n, i, x, b, p, e);
         int lowerHex = operAdd;
-
+        int testInt = -1;
         if(i) {
-            int testInt = getOperandNumber(operand); //Testing if is a immediate integer
+            testInt = getOperandNumber(operand); //Testing if is a immediate integer
             if(testInt != -1) lowerHex = testInt; //If the operand is a immediate integer, change the displacement to that value
         }
-        if(p) lowerHex = operAdd - (curAdd); //This should not happen for immediate integer, checked by the getFlagsInfo
+        int pcAdd = (e) ? (curAdd+4) : (curAdd+3);
+        if(p) lowerHex = operAdd - (pcAdd); //This should not happen for immediate integer, checked by the getFlagsInfo
         if(b) lowerHex = operAdd - baseAdd; //This also shouldn't happen for immediate integer, 
         if(e)
             sprintf(*output, "%03X%05X", upper3Hex, lowerHex & 0xFFFFF);
         else
             sprintf(*output, "%03X%03X", upper3Hex, lowerHex & 0xFFF);
         
+        if(e) {
+            if(testInt == -1) *requireMRecord = 1;
+        }
         return 0; //Success
     }
     return errorCode;
@@ -544,6 +556,13 @@ int validateXeInsFormat(struct symbolTable* symbolTable, char* ins, char* operan
     }
 
     return 0;
+}
+
+char* getMObjCode(int curAdd, char* programName) {
+    char* r = calloc(10+strlen(programName)+1, sizeof(char));
+
+    sprintf(r, "M%06X%02X+%s", curAdd+1, 5, programName);
+    return r;
 }
 
 void errorOutput(int lineNum, char* insOrDir, char* operand, int errorCode) {
