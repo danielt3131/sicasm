@@ -48,13 +48,64 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     //         printf("%s\t%s\tNot a format 3\n", ins, operand);
     // }
     objectFile* objFile = malloc(sizeof(objectFile));
-    char buffer[40];
-    sprintf(buffer, "H%-6s%06X%06X\n", symbolTable->symbols[0].name, symbolTable->symbols[0].address, symbolTable->symbols[symbolTable->numberOfSymbols - 1].address - symbolTable->symbols[0].address);
-    objFile->hRecord = malloc(strlen(buffer) + 1);
-    strcpy(objFile->hRecord, buffer);
+
+    // Variables to store program name, starting address, and program length
+    char *programName = NULL;
+    int startAddress = 0;
+    int programLength = 0;
+
+    // Parse the first line to get program name and start address
+    if (fileBuf->numLines > 0) {
+        char *firstLine = strdup(fileBuf->lines[0]); // Duplicate the first line to avoid modifying the original
+        char *token = strtok(firstLine, " \t\n"); // Tokenize by spaces, tabs, and newlines
+
+        // Get program name
+        if (token != NULL) {
+            programName = strdup(token); // Store the program name
+        }
+
+        // Get directive (should be "START")
+        token = strtok(NULL, " \t\n");
+        if (token != NULL && strcmp(token, "START") == 0) {
+            // Get starting address
+            token = strtok(NULL, " \t\n");
+            if (token != NULL) {
+                startAddress = (int)strtol(token, NULL, 16); // Convert from hex string to int
+            }
+        }
+        free(firstLine); // Free the duplicate line
+    }
+
+    // Calculate the program length
+    if (fileBuf->numLines > 0) {
+        int lastAddress = fileBuf->address[fileBuf->numLines - 1]; // Get the last address
+        programLength = lastAddress - startAddress;
+    }
+    // Construct the header record and add to objectFile*
+    objFile->hRecord = calloc(20, sizeof(char));
+    sprintf(objFile->hRecord, "H%-6s%06X%06X", programName, startAddress, programLength);
+
+    // Debug output to verify program name, starting address, and program length
+    if (programName != NULL) {
+        printf("Program Name: %s\n", programName);
+    }
+    printf("Start Address: %04X\n", startAddress);
+    printf("Program Length: %04X bytes\n", programLength);
+
+    // Create the record list for object file
     recordList *record = calloc(1, sizeof(recordList));
+
+
+    // Generate text records (T-records)
+
     int firstExecInstructionAddress;
     int error = getTRecords(symbolTable, fileBuf, record, &firstExecInstructionAddress);
+    if (error) {
+        fprintf(stderr, "Error generating text records: %d\n", error);
+    }
+    // Free the program name
+    free(programName);
+
     //printf("%d\n", error);
     objFile->tRecords = printRecordTable(*record);
     objFile->eRecord = malloc(8);
