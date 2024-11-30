@@ -15,8 +15,7 @@ struct stringArray* printRecordTable(recordList table) {
             array->allocatedAmount *= 2;
             array->stringArray = realloc(array->stringArray, array->allocatedAmount * sizeof(char *));
         }
-        array->stringArray[i] = malloc(61);
-
+        array->stringArray[i] = malloc(82);
         sprintf(array->stringArray[i], "%s\n", temp->r);
         temp = temp->next;
         i++;

@@ -108,7 +108,9 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
 
     //printf("%d\n", error);
     objFile->tRecords = printRecordTable(*record);
-    objFile->eRecord = malloc(8);
+    objFile->eRecord = malloc(10);
+    objFile->mRecords = malloc(sizeof(struct stringArray));
+    objFile->mRecords->numStrings = 0;
     sprintf(objFile->eRecord,  "E%06X\n", firstExecInstructionAddress);
     freeRecord(record);
     //return record;

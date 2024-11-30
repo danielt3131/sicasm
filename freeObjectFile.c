@@ -13,8 +13,8 @@ void freeObjectFile(objectFile * objFile) {
             free(objFile->mRecords->stringArray[i]);
         }
         free(objFile->mRecords->stringArray);
-        free(objFile->mRecords);
     }
+    free(objFile->mRecords);
     free(objFile->tRecords->stringArray);
     free(objFile->tRecords);
     free(objFile->hRecord);
