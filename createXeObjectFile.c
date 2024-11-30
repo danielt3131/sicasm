@@ -511,22 +511,36 @@ int validateXeInsFormat(struct symbolTable* symbolTable, char* ins, char* operan
 
     if(format == 2) {
         struct stringArray* split = stringSplit(operand, ",");
-        if(split->numStrings > 2) return 14; //format 2 allow maximum of 2 register
+        if(split->numStrings > 2) {
+            freeSplit(split);
+            return 14; //format 2 allow maximum of 2 register
+        }
         int reg1 = 0, reg2 = 0;
 
         reg1 = getRegisterNum(split->stringArray[0]);
 
-        if(split->numStrings > 1) reg2 = getRegisterNum(split->stringArray[1]);
+        if(split->numStrings > 1) {
+            reg2 = getRegisterNum(split->stringArray[1]);
+        }
 
         freeSplit(split);
-        if(reg1 == -1 || reg2 == -1) return 15; //Invalid register
+        if(reg1 == -1 || reg2 == -1) {
+            return 15; //Invalid register
+        }
     }
 
     if(format == 3) {
         struct stringArray* split = stringSplit(operand, "\t\n");
-        if(split->numStrings > 1) return 16; //Multiple operand not allow
+        if(split->numStrings > 1) {
+            freeSplit(split);
+            return 16; //Multiple operand not allow
+        }
         int address = getOperAddress(symbolTable, operand);
-        if (address == -1) return 17; // Operand not in the symbol table
+        if (address == -1) {
+            freeSplit(split);
+            return 17; // Operand not in the symbol table
+        }
+        freeSplit(split);
     }
 
     return 0;
