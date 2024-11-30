@@ -34,4 +34,5 @@ bool containsValidCharacters(char *string);
 int getXeFormat(const char *opcode);
 int getAddress(struct symbolTable* table, const char *symbol);
 bool xeChecker(struct stringArray* split);
+char* removeLeadingSpace(char* str);
 #endif
