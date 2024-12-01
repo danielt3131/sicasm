@@ -29,7 +29,9 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
     bool seenStart = false;
     bool seenEnd = false;
     for (int i = 0; i < fileBuf->numLines; i++) {
-        fileBuf->address[i] = address;
+        if(seenStart)
+            fileBuf->address[i] = address;
+
         currentLine = fileBuf->lines[i];
         lineNumber = fileBuf->lineNumbers[i];
         if (currentLine[0] == '\n' && !seenEnd) {
@@ -54,6 +56,7 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
                     sscanf(split->stringArray[2], "%x", &address);
                     //printf("%d %x", address, address);
                     symbolTable->symbols[currentSymbol].address = address;
+                    fileBuf->address[i] = address;
                 } else if (!strcmp(split->stringArray[1], "RESB")) {
                     symbolTable->symbols[currentSymbol].address = address;
                     address = address + atoi(split->stringArray[2]);
