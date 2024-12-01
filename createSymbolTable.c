@@ -60,17 +60,17 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
                 } else if (!strcmp(split->stringArray[1], "RESB")) {
                     symbolTable->symbols[currentSymbol].address = address;
                     address = address + atoi(split->stringArray[2]);
-                
-                if (!strcmp(split->stringArray[1], "D")) {
-                     symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[0]) + 1);
-                     strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[0]);
-                        symbolTable->symbols[currentSymbol].address = 0; // Address may be updated later
-                         symbolTable->symbols[currentSymbol].isExternal = true;
-                         currentSymbol++;
-                        symbolTable->numberOfSymbols++;
-                        continue;
-                    }
-                    else if (!strcmp(split->stringArray[1], "BYTE")) {
+                }else if (!strcmp(split->stringArray[1], "EXDEF")) { 
+                    for (int j = 2; j < split->numStrings; j++) { // Loop through symbols listed in EXDEF
+                             symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[j]) + 1);
+                             strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[j]);
+                             symbolTable->symbols[currentSymbol].address = 0; 
+                             symbolTable->symbols[currentSymbol].isExternal = true; // Mark as external
+                              currentSymbol++;
+                              symbolTable->numberOfSymbols++;
+                         }
+                     continue; // Skip further processing for this line
+                    } else if (!strcmp(split->stringArray[1], "BYTE")) {
                     if (split->stringArray[2][0] == 'C') {
                         int i = 2;
                         int size = 0;

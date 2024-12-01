@@ -35,6 +35,7 @@ struct symbolTable {
     symbol *symbols;
     int numberOfSymbols;
     int allocatedAmount;
+    bool isExternal;
 };
 
 struct stringArray {
