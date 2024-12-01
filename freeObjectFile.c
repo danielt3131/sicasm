@@ -14,6 +14,13 @@ void freeObjectFile(objectFile * objFile) {
         }
         free(objFile->mRecords->stringArray);
     }
+    if (objFile->dRecords != NULL) {
+        for (int i = 0; i < objFile->dRecords->numStrings; i++) {
+            free(objFile->dRecords->stringArray[i]);
+        }
+        free(objFile->dRecords->stringArray);
+        free(objFile->dRecords);
+    }
     free(objFile->mRecords);
     free(objFile->tRecords->stringArray);
     free(objFile->tRecords);
