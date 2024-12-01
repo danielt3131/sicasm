@@ -14,7 +14,7 @@ int getRegisterNum(char *registerName);
 // Supports 1 and 2 operands
 //bool isValidOperand(char **operand, char *instruction);
 int getOpcodeValue(const char *opcode);
-#define NUMBER_OF_DIRECTIVES 9
+#define NUMBER_OF_DIRECTIVES 10
 #define NUMBER_OF_OPCODES 59
 #define NUMBER_OF_XEOPCODES 33
 #define MAX_WORD_SIZE 1048575

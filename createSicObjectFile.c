@@ -26,18 +26,35 @@ objectFile* createSicObjectFile(struct symbolTable *symbolTable, fileBuffer *fil
     int length = strlen(buffer);
     objFile->hRecord = malloc(sizeof(char) * (length + 1));
     strcpy(objFile->hRecord, buffer);
+
     // Generate the D record
-    char dRecordBuffer[61] = "";
+    char dRecordBuffer[74];
+    int numDRecords = 0;
+    int dRecordCount = 0;
+    objFile->dRecords = malloc(sizeof(struct stringArray));
+    objFile->dRecords->numStrings = 0;
+    objFile->dRecords->allocatedAmount = 2;
+    objFile->dRecords->stringArray = malloc(sizeof(char *) * objFile->dRecords->allocatedAmount);
     for (int i = 0; i < table->numberOfSymbols; i++) {
        if (table->symbols[i].isExternal) {
-          char temp[13];
-            sprintf(temp, "D%-6s%06X", table->symbols[i].name, table->symbols[i].address);
-            strcat(dRecordBuffer, temp);
-     }
+           char temp[13];
+           sprintf(temp, "%-6s%06X", table->symbols[i].name, table->symbols[i].address);
+           numDRecords++;
+           if (numDRecords > 6) {
+               if (objFile->dRecords->numStrings >= objFile->dRecords->allocatedAmount) {
+                   objFile->dRecords->allocatedAmount *= 2;
+                   objFile->dRecords->stringArray = realloc(objFile->dRecords->stringArray, sizeof(char *) *  objFile->dRecords->allocatedAmount);
+               }
+               objFile->dRecords->stringArray[dRecordCount] = malloc(74);
+               sprintf(objFile->dRecords->stringArray[dRecordCount], "D");
+               strcat(objFile->dRecords->stringArray[dRecordCount], dRecordBuffer);
+               dRecordBuffer[0] = '\0';
+               dRecordCount++;
+               objFile->dRecords->numStrings++;
+           }
+           strcat(dRecordBuffer, temp);
+       }
     }
-    strcat(dRecordBuffer, "\n");
-    objFile->dRecords = malloc(sizeof(char) * (strlen(dRecordBuffer) + 1));
-    strcpy(objFile->dRecords, dRecordBuffer);
 
     /*
     // Consume start directive
