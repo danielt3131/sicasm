@@ -87,13 +87,6 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     objFile->hRecord = calloc(20, sizeof(char));
     sprintf(objFile->hRecord, "H%-6s%06X%06X\n", programName, startAddress, programLength);
 
-    // Debug output to verify program name, starting address, and program length
-    if (programName != NULL) {
-        printf("Program Name: %s\n", programName);
-    }
-    printf("Start Address: %04X\n", startAddress);
-    printf("Program Length: %04X bytes\n", programLength);
-
     // Create the record list for object file
     recordList *tRecord = calloc(1, sizeof(recordList));
     recordList *mRecord = calloc(1, sizeof(recordList));
@@ -133,7 +126,12 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
         }
     }
     freeSplit(endSplit);
-
+    if (error) {
+        free(objFile->hRecord);
+        free(objFile);
+        fprintf(stderr, "Error generating text records: %d\n", error);
+        return NULL;
+    }
     //printf("%d\n", error);
     objFile->tRecords = printRecordTable(*tRecord);
     objFile->eRecord = malloc(10);
