@@ -1,8 +1,8 @@
 SHELL := /bin/bash
 CC = gcc
 TARGET = project2
-CFLAGS = -Wall -Wextra -g -O0
-OBJS = main.o createSymbolTable.o checker.o freeSymbolTable.o objcodeCreate.o stringSplit.o createObjectFile.o freeObjectFile.o fileBuffer.o
+CFLAGS = -Wall -Wextra -ggdb -O0
+OBJS = main.o createSymbolTable.o checker.o freeSymbolTable.o objcodeCreate.o stringSplit.o createSicObjectFile.o createXeObjectFile.o freeObjectFile.o fileBuffer.o recordTable.o
 all: $(TARGET)
 
 $(TARGET) : $(OBJS)

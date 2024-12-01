@@ -73,7 +73,7 @@ bool containsValidCharacters(char *string) {
     }
     return true; 
 }
-const char *directives[] = {"START","END","BYTE","WORD","RESB","RESW","RESR","EXPORTS"};
+const char *directives[] = {"START","END","BYTE","WORD","RESB","RESW","RESR","EXPORTS","BASE"};
 /**
  * @brief Opcodes names & values in hexadecimal
   */
@@ -83,6 +83,8 @@ const char *opcodes[] = {"ADD","ADDF","ADDR","AND","CLEAR","COMP","COMPF","COMPR
 const int opcodesValue[] = {0x18, 0x58, 0x90, 0x40, 0xB4, 0x28, 0x88, 0xA0, 0x24, 0x64, 0x9C, 0xC4, 0xC0, 0xF4, 0x3C, 0x30, 0x34, 0x38, 0x48, 0x00, 0x68, 0x50, 
 0x70, 0x08, 0x6C, 0x74, 0x04, 0xD0, 0x20, 0x60, 0x98, 0xC8, 0x44, 0xD8, 0xAC, 0x4C, 0xA4, 0xA8, 0xF0, 0xEC, 0x0C, 0x78, 0x54, 0x80, 0xD4, 0x14, 0x7C, 0xE8, 0x84, 0x10, 
 0x1C, 0x5C, 0x94, 0xB0, 0xE0, 0xF8, 0x2C, 0xB8, 0xDC};
+const int opcodeFormats[] = {3, 3, 2, 3, 2, 3, 3, 2, 3, 3, 2, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 3, 3, 2, 3, 2, 2, 1, 3, 3, 3, 3,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 1, 3, 2, 3};
 bool isDirective(char *directive) {
     for (int i = 0; i < NUMBER_OF_DIRECTIVES; i++) {
         if(!strcmp(directive, directives[i])) {
@@ -93,7 +95,10 @@ bool isDirective(char *directive) {
 }
 
 bool isOpcode(char *opcode){
-    // check aganist list of opcodes
+    // check if it can have +
+    if(*opcode == '+' && getXeFormat(opcode+1) == 3)
+        opcode++;
+    // check against list of opcodes
     for (int i = 0; i < NUMBER_OF_OPCODES; i++) {
         if(!strcmp(opcode, opcodes[i])) {
             return true;
@@ -121,4 +126,105 @@ int getOpcodeValue(const char *opcode) {
         }
     }
     return OBJCODE_ERROR;
+}
+
+int getXeFormat(const char *opcode) {
+    if(*opcode == '+') opcode++;
+    for (int i = 0; i < NUMBER_OF_OPCODES; i++) {
+        if (!strcmp(opcode, opcodes[i])) {
+            return opcodeFormats[i];
+        }
+    }
+
+    return -1;
+}
+
+int getAddress(struct symbolTable* table, const char *symbol) {
+    for (int i = 0; i < table->numberOfSymbols; i++) {
+        if(!strcmp(symbol, table->symbols[i].name)) {
+            return table->symbols[i].address;
+        }
+    }
+    return -1;
+}
+const char *registerNames[] = {"A", "X", "L", "B", "S", "T", "F", "PC", "SW"};
+const int registerValues[] = {REGISTER_A, REGISTER_X, REGISTER_L, REGISTER_B, REGISTER_S, REGISTER_T, REGISTER_F, REGISTER_PC, REGISTER_SW};
+int getRegisterNum(char *registerName) {
+    for (int i = 0; i < NUMBER_OF_REGISTERS; i++) {
+        if (!strcmp(registerNames[i], registerName)) {
+            return registerValues[i];
+        }
+    }
+    return -1;
+}
+
+const char *xeOpcodes[] = {"ADDF", "ADDR", "CLEAR", "COMPF", "COMPR", "DIVF", "DIVR", "FIX",
+   "FLOAT", "HIO", "LDB", "LDF", "LDS", "LDT", "LPS", "MULF", "MULR", "NORM",
+   "RMO", "SHIFTL", "SHIFTR", "SIO", "SSK", "STB", "STF", "STI", "STS", "STT",
+   "SUBF", "SUBR", "SVC", "TIO", "TIXR"};
+
+/**
+ * Determines if the opcode or operand is using xe features
+ * Used in createSymbolTable() to set a flag used in main to determine which createObjectCode functions to use
+ * @param opcode
+ * @param operand
+ * @return True if it is XE
+ */
+bool xeChecker(struct stringArray* split) {
+    // Address modes
+    char *opcode;
+    char *operand;
+    if (split->numStrings >= 2) {
+        if (split->numStrings == 3) {
+            opcode = split->stringArray[1];
+            operand = split->stringArray[2];
+        } else {
+            opcode = split->stringArray[0];
+            operand = split->stringArray[1];
+        }
+        if (opcode[0] == '#' || operand[0] == '#') {
+            return true;
+        }
+        if (opcode[0] == '@' || operand[0] == '@') {
+            return true;
+        }
+        if (opcode[0] == '+' || operand[0] == '+') {
+            return true;
+        }
+        if (opcode[0] == '*' || operand[0] == '*') {
+            return true;
+        }
+        // Test opcodes
+        for (int i = 0; i < NUMBER_OF_XEOPCODES; i++) {
+            if (!strcmp(opcode, xeOpcodes[i])) {
+                return true;
+            }
+        }
+    } else {
+        opcode = split->stringArray[0];
+        if (opcode[0] == '#') {
+            return true;
+        }
+        if (opcode[0] == '@') {
+            return true;
+        }
+        if (opcode[0] == '+') {
+            return true;
+        }
+        if (opcode[0] == '*') {
+            return true;
+        }
+        // Test opcodes
+        for (int i = 0; i < NUMBER_OF_XEOPCODES; i++) {
+            if (!strcmp(opcode, xeOpcodes[i])) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+char* removeLeadingSpace(char* str) {
+    while(*str == ' ') str++;
+    return str;
 }

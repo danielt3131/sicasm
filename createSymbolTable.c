@@ -9,13 +9,16 @@
 #include <stdlib.h>
 #include "fileBuffer.h"
 
+
+
 /**
  * @brief Creates a symbol table for the SIC architecture
  * @param fileBuf The file buffer of the assembly file
  * @return The pointer to the symbol table or NULL if there was an error
  */
-struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
+struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool *isXE) {
     char *currentLine;
+    fileBuf->address = malloc(sizeof(int) * fileBuf->numLines);
     struct symbolTable *symbolTable = malloc(sizeof(struct symbolTable));
     symbolTable->symbols = malloc(*numSymbols * sizeof(symbol));
     symbolTable->allocatedAmount = *numSymbols;
@@ -26,13 +29,17 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
     bool seenStart = false;
     bool seenEnd = false;
     for (int i = 0; i < fileBuf->numLines; i++) {
+        if(seenStart)
+            fileBuf->address[i] = address;
+
         currentLine = fileBuf->lines[i];
+        lineNumber = fileBuf->lineNumbers[i];
         if (currentLine[0] == '\n' && !seenEnd) {
             freeSymbolTable(symbolTable);
             fprintf(stderr, "Whitespace found at Line %d\n", lineNumber);
             return NULL;
         }
-        lineNumber = fileBuf->lineNumbers[i];
+        struct stringArray *split = stringSplit(currentLine, "\t\n");
         if (!isspace(currentLine[0])) {
             /*
             if (currentSymbol >= symbolTable->allocatedAmount) {
@@ -40,7 +47,6 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
                 symbolTable->symbols = realloc(symbolTable->symbols, sizeof(symbol) * symbolTable->allocatedAmount);
             }
             */
-            struct stringArray *split = stringSplit(currentLine, "\t\n");
             if (isValidSymbol(split->stringArray[0], symbolTable, lineNumber) && split->numStrings >= 2) {
                 symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[0]) + 1);
                 strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[0]);
@@ -50,6 +56,7 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
                     sscanf(split->stringArray[2], "%x", &address);
                     //printf("%d %x", address, address);
                     symbolTable->symbols[currentSymbol].address = address;
+                    fileBuf->address[i] = address;
                 } else if (!strcmp(split->stringArray[1], "RESB")) {
                     symbolTable->symbols[currentSymbol].address = address;
                     address = address + atoi(split->stringArray[2]);
@@ -105,9 +112,31 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
                 } else if (!strcmp(split->stringArray[1], "END")) {
                     seenEnd = true;
                     symbolTable->symbols[currentSymbol].address = address;
-                } else {
+                } else if(strcmp(split->stringArray[1], "BASE") == 0) {
+                    freeSplit(split);
                     symbolTable->symbols[currentSymbol].address = address;
-                    address += 3;
+                    currentSymbol++;
+                    symbolTable->numberOfSymbols++;
+                   // address = address + 3;
+                    continue;
+                } else {
+                    if(!isOpcode(split->stringArray[1])) {
+                        fprintf(stderr, "Line: %d - Invalid instruction\n%s\n", i+1, split->stringArray[1]);
+                        freeSplit(split);
+                        freeSymbolTable(symbolTable);
+                        return NULL;
+                    }
+                    symbolTable->symbols[currentSymbol].address = address;
+                    int addressToAdd;
+                    addressToAdd = getXeFormat(split->stringArray[1]);
+                    if(addressToAdd == -1) {
+                        freeSplit(split);
+                        return NULL;
+                    }
+                    if(addressToAdd == 3) {
+                        addressToAdd = (split->stringArray[1][0] == '+') ? 4 : 3;
+                    }
+                    address += addressToAdd;
                 }
                 currentSymbol++;
                 symbolTable->numberOfSymbols++;
@@ -123,10 +152,44 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
                 freeSymbolTable(symbolTable);
                 return NULL;
             }
+            if (!(*isXE)) {
+                *isXE = xeChecker(split);
+            }
             freeSplit(split);
             //puts("Created Symbol\n");
-        } else {
-            address += 3;
+
+        } else { //I think this might not work if BYTE directive does not have a symbol
+            if (!(*isXE)) {
+                *isXE = xeChecker(split);
+            }
+            if(strcmp(split->stringArray[0], "BASE") == 0) {
+                freeSplit(split);
+                continue;
+            } else if(strcmp(split->stringArray[0], "END") == 0) {
+                seenEnd = true;
+            } else if (strcmp(split->stringArray[0], "RESW") == 0) {
+                address = address + (atoi(split->stringArray[1]) * 3);
+            } else if (strcmp(split->stringArray[0], "RESB") == 0) {
+                address = address + atoi(split->stringArray[1]);
+            } else {
+                if(!isOpcode(split->stringArray[0])) {
+                    fprintf(stderr, "Line: %d - Invalid instruction\n", i+1);
+                    freeSplit(split);
+                    freeSymbolTable(symbolTable);
+                    return NULL;
+                }
+                int addressToAdd;
+                addressToAdd = getXeFormat(split->stringArray[0]);
+                if(addressToAdd == -1) {
+                    freeSplit(split);
+                    return NULL;
+                }
+                if(addressToAdd == 3) {
+                    addressToAdd = (split->stringArray[0][0] == '+') ? 4 : 3;
+                }
+                address += addressToAdd;
+            }
+            freeSplit(split);
         }
         if (address > RAM_LIMIT) {
             freeSymbolTable(symbolTable);
@@ -142,5 +205,3 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols) {
     */
     return symbolTable;
 }
-
-

@@ -2,7 +2,7 @@
  * @author Daniel J. Thompson (N01568044)
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
-#include "createObjectFile.h"
+#include "createSicObjectFile.h"
 #include <string.h>
 #include "checker.h"
 

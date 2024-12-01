@@ -15,12 +15,13 @@ struct stringArray* stringSplit(char *string, char *delim) {
     split->stringArray = malloc(sizeof(char *) * split->allocatedAmount);
     char *splitTemp = strtok(stringCopy, delim);
     while (splitTemp != NULL) {
-        if (splitTemp[0] == '#' || splitTemp[0] == '\n') {
+        //if (splitTemp[0] == '#' || splitTemp[0] == '\n') 
+        if(splitTemp[0] == '\n') {
             break;
         }
         if (split->numStrings >= split->allocatedAmount) {
             split->allocatedAmount = split->allocatedAmount * 2;
-            split->stringArray = realloc(split->stringArray, split->allocatedAmount);
+            split->stringArray = realloc(split->stringArray, split->allocatedAmount * sizeof(char *));
         }
         split->stringArray[split->numStrings] = malloc(strlen(splitTemp) + 1);
         strcpy(split->stringArray[split->numStrings], splitTemp);

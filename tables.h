@@ -17,6 +17,7 @@ typedef struct {
     int numLines;
     int allocationAmount;
     int *lineNumbers;
+    int *address;
 } fileBuffer;
 
 typedef struct {
@@ -47,10 +48,21 @@ typedef struct {
     struct stringArray* mRecords;
 } objectFile;
 
+typedef struct record {
+    char* r;
+    struct record* next;
+} record;
+typedef struct recordList {
+    record* head;
+    record* tail;
+} recordList;
 
 struct stringArray* stringSplit(char *string, char *delim);
 void freeSymbolTable(struct symbolTable*);
-struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols);
+struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool *isXE);
 //struct symbolTable* createSymbolTable(FILE *file);
 void freeSplit(struct stringArray *split);
+void insertRecord(recordList* table, char* r);
+struct stringArray* printRecordTable(recordList table);
+void freeRecord(recordList* table);
 #endif

@@ -2,7 +2,7 @@
  * @author Daniel J. Thompson (N01568044)
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
-#include "createObjectFile.h"
+#include "createSicObjectFile.h"
 #include <string.h>
 #include <stdlib.h>
 #include "tables.h"
@@ -11,7 +11,7 @@
 #include <ctype.h>
 #include "fileBuffer.h"
 
-objectFile* createObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf) {
+objectFile* createSicObjectFile(struct symbolTable *symbolTable, fileBuffer *fileBuf) {
     char *currentLine;
     char buffer[100];
     char tRecordBuffer[61];
