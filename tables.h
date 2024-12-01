@@ -1,5 +1,7 @@
 /**
  * @author Daniel J. Thompson (N01568044)
+ * @author Tianyu Wu
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #ifndef TABLES_H
 #define TABLES_H

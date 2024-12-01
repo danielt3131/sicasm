@@ -1,5 +1,6 @@
 /**
  * @author Tianyu Wu
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #ifndef XEOBJCODECREATE_H
 #define XEOBJCODECREATE_H

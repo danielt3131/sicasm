@@ -1,5 +1,6 @@
 /**
  * @author Daniel J. Thompson (N01568044)
+ * @author Tianyu Wu
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "createSicObjectFile.h"
