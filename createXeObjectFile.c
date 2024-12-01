@@ -156,7 +156,6 @@ int getTAndMRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, record
         int curAdd = fileBuf->address[x];
         int nextStartAdd = curAdd;
         int requireMRecord = 0;
-        printf("%X %s\n", curAdd, fileBuf->lines[x]);
 
         struct stringArray* strArr = stringSplit(curLine, "\t\n");
         
