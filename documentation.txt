@@ -1,43 +1,76 @@
-SIC assembler pass 1 & 2 by Daniel J. Thompson (N01568044)
-Assembly instructions must be separated by a tab character as spaces are not supported.  There is no limit to how long a line can be as long as there is sufficient memory
-Error messages are sent to the standard error stream (stderr).
-The main function opens up a file stream based on the first command line argument then it passes the file pointer to the function createFileBuffer to read the contents of the file into memory to reduce disk io.
-After createFileBuffer, a fileBuffer pointer is passed to createSymbolTable to create the symbol table then passing the fileBuffer and symbolTable to createObjectFile to create the objectFile
+SIC/XE assembler by Daniel Thompson, Tianyu Wu, and Samuel Gray licensed under the GPLv2 or later
+The codebase is based on the SIC assembler made by Daniel Thompson
+The main function opens up a file stream based on the first command line argument or file redirection / piped from another process and sets the file pointer to stdin.
+After the file pointer is created the pointer is passed to the function createFileBuffer to read the contents of the file into memory to reduce disk io.
+After createFileBuffer, a fileBuffer pointer is passed to createSymbolTable to create the symbol table then passing the fileBuffer and symbolTable to createSicObjectFile/createXeObjectFile to create the object file
 If there is an issue of opening up the file from the first command line argument, my assembler will detect the following errors:
     1. If the file does not exist
     2. If the user does not have read permissions for the file by using the POSIX syscall access
 Symbol Table:
     The function createSymbolTable will either return a pointer to a structure called symbolTable or NULL if an error has occurred while creating the symbol table.
-    In the createSymbolTable function after reading in a line, the line is split into indivdual tokens stored in an array of character pointers that is inside of a structure called stringArray, for easy lookup when creating the symbol table.
+    The function createSymbolTable takes in a pointer to a bool called isXE for determining which object file creation method to be executed in main() and the value is determined from the result of the function xeChecker.
+    In the createSymbolTable function after reading in a line, the line is split into individual tokens stored in an array of character pointers that is inside of a structure called stringArray, for easy lookup when creating the symbol table.
     The struct symbolTable contains the following, an integer for the number of symbols, an integer for how many symbols can be stored (allocation amount), and a pointer to an array of symbol structures.
-    The symbol structure contains the following, an integer to store the memory address, an integer to store the linenumber (for error messages), and a character pointer to store the name of the symbol.
+    The symbol structure contains the following, an integer to store the memory address, an integer to store the line number (for error messages), and a character pointer to store the name of the symbol.
+    Inside the createSymbolTable function, the memory address of each line is calculated and is stored in the fileBuffer (used for the createXeObjectFile function).
 
-Object File:
+Object File layout:
 The contents of the object file are saved in a struct called objectFile which contains the following:
     2 char * for the H record and E record
     2 struct stringArray* for the T records and the M records
-The object file is created in createObjectFile.c and the object code is created in objectcodeCreate.c.  The objectcodeCreate function takes in 4 arguments the opcode, address, the symbolTable and the address mode.
-In the objectcodeCreate function the opcode and address are retrieved from the lookup table in checker.c and from the symbol table.  The values of each the opcode and address are saved in hex formatted strings to be concatenated together.
-The resulting hex string is converted back into an integer for the address mode bit set.
 
-The memory required for my assembler implementation is less than /usr/bin/sicasm by the tool massif from valgrind.  The runtime complexity is O(n^2) and the space complexity is O(n).  The amount of memory used while processing is 3 * k where k is the size of the assembly file in bytes
-In addition, my assembler implementation throws no errors when ran with valgrind for all test files, and all memory that is allocated is freed when the program exits either normally or when an error occurs ie no memory leaks.
+SIC Object File Creation:
+    The object file is created in createSicObjectFile.c and the object code is created in objectcodeCreate.c.
+    The objectcodeCreate function takes in 4 arguments the opcode, address, the symbolTable and the address mode.
+    In the objectcodeCreate function the opcode and address are retrieved from the lookup table in checker.c and from the symbol table.
+    The values of each the opcode and address are saved in hex formatted strings to be concatenated together.
+    The resulting hex string is converted back into an integer for the address mode bit set.
+
+SIC/XE Object File Creation:
+    The object file is created in createXeObjectFile.c
+    T-Record Implementation
+    The XE version includes 4 different formats, each generating a different object code.
+    Formats 1 and 2 are straightforward because we only need the opcode or the register number. However, formats 3 and 4 are more complex due to the 6 flag bits.
+
+    To determine the flag bits, we must identify special characters such as +, #, @, and X in the instruction name and operand.
+    Based on that result and the opcode, we can compute the first 12 bits of the object code. For the remaining part of the object code, we need to determine either the displacement or the operand address.
+    If the e bit is 1 (indicate format 4), we need to use the operand address that is inside the symbol table.
+    If the e bit is 0, we need to use the displacement relative to the pc address (when the p bit is 1) or the base address (when the b bit is 1).
+
+    M-Record Implementation
+    The implementation of the M-record is similar to project 2. The main difference in the XE version is that not all instructions require modification.
+    The only instructions that need modification are instructions that use address as input, which only exist for format 4.
+    This means we only need to modify format 4 instructions that did not use an immediate value.
+
+    The T-Records and M-Records are initially stored as linked lists and are converted into struct stringArray* to return a objectFile*
+
+The memory required for our assembler implementation in SIC mode is less than /usr/bin/sicasm by the tool massif from valgrind.  The runtime complexity is O(n^2) and the space complexity is O(n).  The amount of memory used while processing is 3 * k where k is the size of the assembly file in bytes
+In addition, our assembler implementation throws no errors when ran with valgrind for all test files, and all memory that is allocated is freed when the program exits either normally or when an error occurs ie no memory leaks.
 The assembler supports the following cli arguments:
     --pass1only will only print the symbol table of the file to stdout
-    -o will save the object file to the provided path -> ./project2 example.sic -o sic.obj will save the object file as sic.obj in the current working directory.
+    -o will save the object file to the provided path -> ./project4 example.sic -o sic.obj will save the object file as sic.obj in the current working directory.
     -p will print the contents of the object file to stdout and will not create a file (used for pipes and redirection)
     -h will print the help menu with info for all command line arguments
     -v will print the current version of the assembler
 If no command line arguments are passed to the assembler then the following is displayed to the user
-    USAGE: ./project2 <filename, - where filename is a SIC Assembly File
-    Run ./project2 -h for more info
+    USAGE: ./project4 <filename, - where filename is a SIC or SIC/XE Assembly File
+    Run ./project4 -h for more info
 If the file is unable to be written the program will tell the user to either fix the permissions issue, grant elevated privileges, or run with -p to print to stdout for redirection for the next run
-The assembler is able to detect the error including but not limited to:
+
+The assembler is able to detect errors for SIC and SIC/XE including but not limited to:
     1. Blank lines ie (CRLF / LF)
     2. Symbols that were declared twice
     3. Symbols that don't meet the specification of what is a valid symbol
     4. Symbol name that matches a directive or an opcode
     5. Invalid Hex constant
     6. Invalid BYTE constant
-    7. Programs that exceed the available memory of the SIC
-My assembly implementation meets all the requirements including combining the text records along with additional command line options that can be used in a build script.	
+    7. Programs that exceed the available memory of the SIC or SIC/XE
+Additional errors that are detected when in SIC/XE mode:
+    1. Invalid number of operands are used
+    2. Invalid register name for format 2
+    3. Operand does not exist in the symbol table
+    4. Operand is used for format 1 or RSUB instructions
+    5. + symbol used on format 1 or 2
+    6. Displacement does not fit within 12 bits for format 3
+
+Our assembly implementation meets all the requirements including combining the text records along with additional command line options that can be used in a build script.

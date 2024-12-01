@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <unistd.h>
 #include "fileBuffer.h"
 #include "tables.h"
@@ -24,7 +23,8 @@ int main(int argc, char **argv) {
     }
 
     if (!(argc < 5 && argc > 1) && !printMode) {
-        printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
+        printf("SIC and SIC/XE assembler by Daniel J. Thompson, Tianyu Wu, Samuel Gray\n");
+        printf("USAGE: %s <filename, - where filename is a SIC or SIC/XE Assembly File\n", argv[0]);
         printf("Run %s -h for more info\n", argv[0]);
         return (EXIT_FAILURE);
     }
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     if (argc == 2) {
         if (!strcmp("-h", argv[1])) {
             printf("USAGE: %s <filename, - where filename is a SIC Assembly File\n", argv[0]);
-           // printHelpMenu();
+            printHelpMenu();
             return EXIT_SUCCESS;
         }
         if (!strcmp("-v", argv[1])) {
@@ -51,9 +51,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "The file %s does not exist\n", argv[1]);
          } else {
              fprintf(stderr, "The user %s lacks read permissions for %s\n", getlogin(), argv[1]);
-             //fprintf(stderr, "The file %s has insufficient read permissions\nMake sure that user %s has read permissions for %s\n", argv[1], getlogin(), argv[1]);
          }
-         //printf("The file %s does not exist or insufficient permissions to read in %s\n", argv[1], argv[1]);
          return EXIT_FAILURE;
     }
     // Create file buffer
@@ -78,11 +76,8 @@ int main(int argc, char **argv) {
         }
         freeSymbolTable(symbolTable);
         freeFileBuffer(buffer);
-        //fclose(sourceFile);
         return EXIT_SUCCESS;
     }
-    // Rewinds the file pointer back to the beginning of the file
-    //rewind(sourceFile);
     /**
      * Pass 2
      * If isXE is true then handle
@@ -95,7 +90,6 @@ int main(int argc, char **argv) {
     }
 
     freeFileBuffer(buffer);
-    //fclose(sourceFile);
     if (objFile == NULL) {
         freeSymbolTable(symbolTable);
         return EXIT_FAILURE;
@@ -118,14 +112,15 @@ int main(int argc, char **argv) {
     } else {
         outputFile = fopen(outputFilename, "w");
     }
-    // if (outputFile == NULL) {
-    //     fprintf(stderr, "Unable to write to %s\n", outputFilename);
-    //     fprintf(stderr, "You can either run me as root, fix the file permissions at %s for user %s, or run with -p to print the object file to stdout and you handle the pipe redirection\n", outputFilename, getlogin());
-    //     free(outputFilename);
-    //     freeSymbolTable(symbolTable);
-    //     freeObjectFile(objFile);
-    //     return EXIT_FAILURE;
-    // }
+    if (outputFile == NULL) {
+        fprintf(stderr, "Unable to write to %s\n", outputFilename);
+        fprintf(stderr, "You can either run me as root, fix the file permissions at %s for user %s, or run with -p to print the object file to stdout and you handle the pipe redirection\n", outputFilename, getlogin());
+        free(outputFilename);
+        freeSymbolTable(symbolTable);
+        freeObjectFile(objFile);
+        fclose(outputFile);
+        return EXIT_FAILURE;
+    }
     fprintf(outputFile, "%s", objFile->hRecord);
     for (int i = 0; i < objFile->tRecords->numStrings; i++) {
         fprintf(outputFile, "%s", objFile->tRecords->stringArray[i]);
