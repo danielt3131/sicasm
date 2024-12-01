@@ -36,7 +36,8 @@ int main(int argc, char **argv) {
             return EXIT_SUCCESS;
         }
         if (!strcmp("-v", argv[1])) {
-            printf("Version 1.1 by Daniel J. Thompson\n");
+            printf("Version 2 by Daniel J. Thompson, Tianyu Wu, Samuel Gray\n");
+            printf("Licensed under the GPLv2 or Later");
             return EXIT_SUCCESS;
         }
     }
