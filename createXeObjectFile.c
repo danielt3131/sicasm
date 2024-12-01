@@ -84,7 +84,7 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
         programLength = lastAddress - startAddress;
     }
     // Construct the header record and add to objectFile*
-    objFile->hRecord = calloc(20, sizeof(char));
+    objFile->hRecord = calloc(21, sizeof(char));
     sprintf(objFile->hRecord, "H%-6s%06X%06X\n", programName, startAddress, programLength);
 
     // Create the record list for object file
@@ -98,7 +98,9 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     if (error) {
         free(objFile->hRecord);
         free(objFile);
-        fprintf(stderr, "Error generating text records: %d\n", error);
+        freeRecord(tRecord);
+        freeRecord(mRecord);
+        free(programName);
         return NULL;
     }
     // Free the program name
@@ -129,7 +131,9 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     if (error) {
         free(objFile->hRecord);
         free(objFile);
-        fprintf(stderr, "Error generating text records: %d\n", error);
+        freeRecord(tRecord);
+        freeRecord(mRecord);
+        free(programName);
         return NULL;
     }
     //printf("%d\n", error);
@@ -178,6 +182,7 @@ int getTAndMRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, record
             errorCode = validateXeInsFormat(symbolTable, insOrDir, operand);
             if(errorCode) {
                 errorOutput(x+1, insOrDir, operand, errorCode);
+                freeSplit(strArr);
                 return errorCode;
             }
 
@@ -193,9 +198,9 @@ int getTAndMRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, record
             errorCode = getTObjCode(insOrDir, operand, curAdd, baseAdd, operAdd, &requireMRecord, &newObjCode);
 
             if(errorCode) {
+                errorOutput(x+1, insOrDir, operand, errorCode);
                 freeSplit(strArr);
                 free(newObjCode);
-                errorOutput(x+1, insOrDir, operand, errorCode);
                 return errorCode;
             }
 
