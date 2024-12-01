@@ -84,15 +84,8 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
         programLength = lastAddress - startAddress;
     }
     // Construct the header record and add to objectFile*
-    objFile->hRecord = calloc(20, sizeof(char));
+    objFile->hRecord = calloc(21, sizeof(char));
     sprintf(objFile->hRecord, "H%-6s%06X%06X\n", programName, startAddress, programLength);
-
-    // Debug output to verify program name, starting address, and program length
-    if (programName != NULL) {
-        printf("Program Name: %s\n", programName);
-    }
-    printf("Start Address: %04X\n", startAddress);
-    printf("Program Length: %04X bytes\n", programLength);
 
     // Create the record list for object file
     recordList *tRecord = calloc(1, sizeof(recordList));
@@ -105,7 +98,9 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     if (error) {
         free(objFile->hRecord);
         free(objFile);
-        fprintf(stderr, "Error generating text records: %d\n", error);
+        freeRecord(tRecord);
+        freeRecord(mRecord);
+        free(programName);
         return NULL;
     }
     // Free the program name
@@ -133,7 +128,14 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
         }
     }
     freeSplit(endSplit);
-
+    if (error) {
+        free(objFile->hRecord);
+        free(objFile);
+        freeRecord(tRecord);
+        freeRecord(mRecord);
+        free(programName);
+        return NULL;
+    }
     //printf("%d\n", error);
     objFile->tRecords = printRecordTable(*tRecord);
     objFile->eRecord = malloc(10);
@@ -180,6 +182,7 @@ int getTAndMRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, record
             errorCode = validateXeInsFormat(symbolTable, insOrDir, operand);
             if(errorCode) {
                 errorOutput(x+1, insOrDir, operand, errorCode);
+                freeSplit(strArr);
                 return errorCode;
             }
 
@@ -195,9 +198,9 @@ int getTAndMRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, record
             errorCode = getTObjCode(insOrDir, operand, curAdd, baseAdd, operAdd, &requireMRecord, &newObjCode);
 
             if(errorCode) {
+                errorOutput(x+1, insOrDir, operand, errorCode);
                 freeSplit(strArr);
                 free(newObjCode);
-                errorOutput(x+1, insOrDir, operand, errorCode);
                 return errorCode;
             }
 
