@@ -2,6 +2,7 @@
  * @author Tianyu Wu
  * @author Samuel Gray
  * @author Daniel J. Thompson (N01568044)
+ * @author Matthew DeAngelis
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "createXeObjectFile.h"
@@ -87,6 +88,18 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     // Construct the header record and add to objectFile*
     objFile->hRecord = calloc(21, sizeof(char));
     sprintf(objFile->hRecord, "H%-6s%06X%06X\n", programName, startAddress, programLength);
+    // Generate D record with listing name and addresses
+    char dRecordBuffer[61] = "";
+    for (int i = 0; i < symbolTable->numberOfSymbols; i++) {
+        if (symbolTable->symbols[i].isExternal) {
+             char temp[13];
+             sprintf(temp, "D%-6s%06X", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
+                strcat(dRecordBuffer, temp);
+            }
+    }
+    strcat(dRecordBuffer, "\n");
+    objFile->dRecords = malloc(sizeof(char) * (strlen(dRecordBuffer) + 1));
+    strcpy(objFile->dRecords, dRecordBuffer);
 
     // Create the record list for object file
     recordList *tRecord = calloc(1, sizeof(recordList));

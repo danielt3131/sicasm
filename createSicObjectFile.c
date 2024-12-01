@@ -26,6 +26,19 @@ objectFile* createSicObjectFile(struct symbolTable *symbolTable, fileBuffer *fil
     int length = strlen(buffer);
     objFile->hRecord = malloc(sizeof(char) * (length + 1));
     strcpy(objFile->hRecord, buffer);
+    // Generate the D record
+    char dRecordBuffer[61] = "";
+    for (int i = 0; i < table->numberOfSymbols; i++) {
+       if (table->symbols[i].isExternal) {
+          char temp[13];
+            sprintf(temp, "D%-6s%06X", table->symbols[i].name, table->symbols[i].address);
+            strcat(dRecordBuffer, temp);
+     }
+    }
+    strcat(dRecordBuffer, "\n");
+    objFile->dRecords = malloc(sizeof(char) * (strlen(dRecordBuffer) + 1));
+    strcpy(objFile->dRecords, dRecordBuffer);
+
     /*
     // Consume start directive
     for (int i = 0; i < table->symbols[0].lineNumber; i++) {
