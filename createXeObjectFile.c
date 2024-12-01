@@ -103,7 +103,10 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     int firstExecInstructionAddress;
     int error = getTAndMRecords(symbolTable, fileBuf, tRecord, mRecord, programName, &firstExecInstructionAddress);
     if (error) {
+        free(objFile->hRecord);
+        free(objFile);
         fprintf(stderr, "Error generating text records: %d\n", error);
+        return NULL;
     }
     // Free the program name
     free(programName);
