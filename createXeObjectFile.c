@@ -108,6 +108,29 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     // Free the program name
     free(programName);
 
+    //finding the user defined first instruction
+    char* endLine = fileBuf->lines[fileBuf->numLines-1];
+    struct stringArray* endSplit = stringSplit(endLine, "\t\n");
+    char* startInstruction = NULL;
+    //Does not contain symbol
+    if(isspace(*endLine)) {
+        if(endSplit->numStrings > 1)
+            startInstruction = endSplit->stringArray[1];
+    } //Else: contain a symbol
+    else {
+        if(endSplit->numStrings > 2)
+            startInstruction = endSplit->stringArray[2];
+    }
+
+    if(startInstruction != NULL) {
+        firstExecInstructionAddress = getAddress(symbolTable, startInstruction);
+        if(firstExecInstructionAddress == -1) {
+            error = 17;
+            errorOutput(fileBuf->lineNumbers[fileBuf->numLines-1], "END", startInstruction, error);
+        }
+    }
+    freeSplit(endSplit);
+
     //printf("%d\n", error);
     objFile->tRecords = printRecordTable(*tRecord);
     objFile->eRecord = malloc(10);
@@ -150,7 +173,7 @@ int getTAndMRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, record
         if(!isDirective(insOrDir)) {
             if (!firstExecInstruction) {
                 firstExecInstruction = true;
-                *firstExecInstructionAddress = fileBuf->address[x]; // The previous address
+                *firstExecInstructionAddress = fileBuf->address[x];
             }
             errorCode = validateXeInsFormat(symbolTable, insOrDir, operand);
             if(errorCode) {
