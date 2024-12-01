@@ -150,7 +150,7 @@ int getTAndMRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, record
         if(!isDirective(insOrDir)) {
             if (!firstExecInstruction) {
                 firstExecInstruction = true;
-                *firstExecInstructionAddress = fileBuf->address[x - 1]; // The previous address
+                *firstExecInstructionAddress = fileBuf->address[x]; // The previous address
             }
             errorCode = validateXeInsFormat(symbolTable, insOrDir, operand);
             if(errorCode) {
