@@ -55,6 +55,23 @@ objectFile* createSicObjectFile(struct symbolTable *symbolTable, fileBuffer *fil
            strcat(dRecordBuffer, temp);
        }
     }
+    // Generate the R record
+    char rRecordBuffer[74] = ""; 
+        for (int i = 0; i < table->numberOfSymbols; i++) {
+             if (table->symbols[i].isExternal) { 
+                 char temp[7];
+                 sprintf(temp, "R%-6s", table->symbols[i].name); 
+                 strcat(rRecordBuffer, temp); 
+                }
+            }
+
+    // Allocate memory for the R record and copy it to the object file 
+        if (strlen(rRecordBuffer) > 0) {
+         strcat(rRecordBuffer, "\n"); 
+         objFile->rRecords = malloc(strlen(rRecordBuffer) + 1);
+         strcpy(objFile->rRecords, rRecordBuffer);
+        }
+
 
     /*
     // Consume start directive

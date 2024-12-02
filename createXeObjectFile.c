@@ -117,6 +117,22 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
             strcat(dRecordBuffer, temp);
         }
     }
+        // Generate the R record
+        char rRecordBuffer[74] = ""; 
+            for (int i = 0; i < symbolTable->numberOfSymbols; i++) {
+             if (symbolTable->symbols[i].isExternal) { 
+                 char temp[7];
+                 sprintf(temp, "R%-6s", symbolTable->symbols[i].name); 
+                 strcat(rRecordBuffer, temp); 
+             }
+        }
+
+// Allocate memory for the R record and copy it to the object file structure
+if (strlen(rRecordBuffer) > 0) {
+    strcat(rRecordBuffer, "\n"); // Add a newline at the end of the R record
+    objFile->rRecords = malloc(strlen(rRecordBuffer) + 1);
+    strcpy(objFile->rRecords, rRecordBuffer);
+}
 
     // Create the record list for object file
     recordList *tRecord = calloc(1, sizeof(recordList));

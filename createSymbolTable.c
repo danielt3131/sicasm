@@ -63,8 +63,8 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
                     address = address + atoi(split->stringArray[2]);
                 } else if (!strcmp(split->stringArray[1], "EXTDEF")) {
                     for (int j = 2; j < split->numStrings; j++) { // Loop through symbols listed in EXDEF
-                            //symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[j]) + 1);
-                            //strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[j]);
+                            symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[j]) + 1);
+                            strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[j]);
                             symbolTable->symbols[currentSymbol].address = address;
                             symbolTable->symbols[currentSymbol].isExternal = true; // Mark as external
                     }
@@ -72,8 +72,19 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
                     symbolTable->numberOfSymbols++;
                     address += 3;
                     freeSplit(split);
-                    continue; // Skip further processing for this line
-                } else if (!strcmp(split->stringArray[1], "BYTE")) {
+                    continue; 
+                }  else if (!strcmp(split->stringArray[1], "EXTREF")) {
+                         for (int j = 2; j < split->numStrings; j++) { // Loop through symbols listed in EXTREF
+                          symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[j]) + 1);
+                         strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[j]);
+                         symbolTable->symbols[currentSymbol].isExternal = true; // Mark as external 
+                        currentSymbol++;
+                            symbolTable->numberOfSymbols++;
+                         }
+                    freeSplit(split);
+                    continue; 
+}
+else if (!strcmp(split->stringArray[1], "BYTE")) {
                     if (split->stringArray[2][0] == 'C') {
                         int i = 2;
                         int size = 0;
