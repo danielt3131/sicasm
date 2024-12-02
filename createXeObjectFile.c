@@ -106,7 +106,7 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     }
     // Free the program name
     free(programName);
-
+    programName = NULL;
     //finding the user defined first instruction
     char* endLine = fileBuf->lines[fileBuf->numLines-1];
     struct stringArray* endSplit = stringSplit(endLine, "\t\n");
@@ -295,8 +295,7 @@ int getTAndMRecords(struct symbolTable *symbolTable, fileBuffer *fileBuf, record
 
 char* createTRecord(int startAdd, char* Objcodes) {
     char* result = calloc(9 + strlen(Objcodes) + 1, sizeof(char));
-    sprintf(result, "T%06X%02X%s", startAdd, strlen(Objcodes)/2, Objcodes);
-
+    sprintf(result, "T%06X%02X%s", startAdd, (unsigned int)(strlen(Objcodes) / 2), Objcodes);
     return result;
 }
 
