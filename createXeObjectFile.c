@@ -2,6 +2,7 @@
  * @author Tianyu Wu
  * @author Samuel Gray
  * @author Daniel J. Thompson (N01568044)
+ * @author Matthew DeAngelis
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "createXeObjectFile.h"
@@ -87,6 +88,51 @@ objectFile* createXeObjectFile(struct symbolTable *symbolTable, fileBuffer *file
     // Construct the header record and add to objectFile*
     objFile->hRecord = calloc(21, sizeof(char));
     sprintf(objFile->hRecord, "H%-6s%06X%06X\n", programName, startAddress, programLength);
+
+
+    char dRecordBuffer[74];
+    int numDRecords = 0;
+    int dRecordCount = 0;
+    objFile->dRecords = malloc(sizeof(struct stringArray));
+    objFile->dRecords->numStrings = 0;
+    objFile->dRecords->allocatedAmount = 2;
+    objFile->dRecords->stringArray = malloc(sizeof(char *) * objFile->dRecords->allocatedAmount);
+    for (int i = 0; i < symbolTable->numberOfSymbols; i++) {
+        if (symbolTable->symbols[i].isExternal) {
+            char temp[13];
+            sprintf(temp, "%-6s%06X", symbolTable->symbols[i].name, symbolTable->symbols[i].address);
+            numDRecords++;
+            if (numDRecords > 6) {
+                if (objFile->dRecords->numStrings >= objFile->dRecords->allocatedAmount) {
+                    objFile->dRecords->allocatedAmount *= 2;
+                    objFile->dRecords->stringArray = realloc(objFile->dRecords->stringArray, sizeof(char *) *  objFile->dRecords->allocatedAmount);
+                }
+                objFile->dRecords->stringArray[dRecordCount] = malloc(74);
+                sprintf(objFile->dRecords->stringArray[dRecordCount], "D");
+                strcat(objFile->dRecords->stringArray[dRecordCount], dRecordBuffer);
+                dRecordBuffer[0] = '\0';
+                dRecordCount++;
+                objFile->dRecords->numStrings++;
+            }
+            strcat(dRecordBuffer, temp);
+        }
+    }
+        // Generate the R record
+        char rRecordBuffer[74] = ""; 
+            for (int i = 0; i < symbolTable->numberOfSymbols; i++) {
+             if (symbolTable->symbols[i].isExternal) { 
+                 char temp[7];
+                 sprintf(temp, "R%-6s", symbolTable->symbols[i].name); 
+                 strcat(rRecordBuffer, temp); 
+             }
+        }
+
+// Allocate memory for the R record and copy it to the object file structure
+if (strlen(rRecordBuffer) > 0) {
+    strcat(rRecordBuffer, "\n"); // Add a newline at the end of the R record
+    objFile->rRecords = malloc(strlen(rRecordBuffer) + 1);
+    strcpy(objFile->rRecords, rRecordBuffer);
+}
 
     // Create the record list for object file
     recordList *tRecord = calloc(1, sizeof(recordList));

@@ -7,41 +7,64 @@
 #include <string.h>
 #include <ctype.h>
 
-bool isValidSymbol(char *currentSymbol, struct symbolTable* table, int lineNumber) {
+bool isValidSymbol(char currentSymbol, struct symbolTable table, int lineNumber) {
     //printf("%s\n", currentSymbol);
     if (!isalpha(currentSymbol[0])) {
-        fprintf(stderr, "Line %d symbol %s isn't valid due to starting with a character that isn't A-Z\r\n", lineNumber, currentSymbol);
+        fprintf(stderr, "Line %d symbol %s isn't valid because it starts with %c which isn't a letter A-Z\r\n", lineNumber, currentSymbol, currentSymbol[0]);
         return false;
     }
     if (isDirective(currentSymbol)) {
-        fprintf(stderr, "Line %d symbol %s isn't valid due to being a directive\r\n", lineNumber, currentSymbol);
+        fprintf(stderr, "Line %d symbol %s isn't valid because it matches a directive name.\r\n", lineNumber, currentSymbol);
         return false;
     }
     if (isOpcode(currentSymbol)) {
-        fprintf(stderr, "Line %d symbol %s isn't valid due to being an opcode A-Z\r\n", lineNumber, currentSymbol);
+        fprintf(stderr, "Line %d symbol %s isn't valid because it matches an opcode nameA-Z\r\n", lineNumber, currentSymbol);
         return false;
     }
     if (strlen(currentSymbol) > 6) {
-        fprintf(stderr, "Line %d symbol %s isn't valid due to being longer than 6 characters\r\n", lineNumber, currentSymbol);
+        fprintf(stderr, "Line %d symbol %s isn't valid due to being longer than 6 characters (length: %lu). \r\n", lineNumber, currentSymbol, strlen(currentSymbol));
         return false;
     }
-    if (!containsValidCharacters(currentSymbol)) {
-        fprintf(stderr, "Line %d symbol %s isn't valid because it contains an invalid character\r\n", lineNumber, currentSymbol);
-        return false;
+    if (containsInvalidCharactersWithErrors(currentSymbol, lineNumber)) {
+        return false; // Errors will already be printed
     }
     if (table->numberOfSymbols == 0) {
         return true;
     }
-    //printf("%d | %s\n", table->numberOfSymbols, currentSymbol);
-    for (int i = 0; i < table->numberOfSymbols; i++) {
-        if(!strcmp(currentSymbol, table->symbols[i].name)) {
-            fprintf(stderr, "Line %d symbol %s isn't valid because the symbol was already declared at Line %d\r\n", lineNumber, currentSymbol, table->symbols[i].lineNumber);
+    for(int i = 0; i < table->numberOfSymbols; i++){
+        if (!strcmp(currentSymbol, table->symbols[i].name)){
+            fprintf(stderr, "Line %d: Symbol '%s' is invalid because it was already defined on line %d.\n", lineNumber, currentSymbol, table->symbols[i].lineNumber);
             return false;
         }
     }
     return true;
 }
 
+bool containsInvalidCharactersWithErrors(char *string, int lineNumber) {
+    size_t length = strlen(string);
+    for (size_t i = 0; i < length; i++) {
+        char c = string[i];
+        if (!isalnum(c)) { // If not in alphabet or a number then check specific cases
+            switch (c) {
+                case '$':
+                case '!':
+                case '=':
+                case '+':
+                case '-':
+                case ',':
+                case '@':
+                case ' ':
+                    fprintf(stderr, "Line %d: Symbol '%s' is invalid because it contains the prohibited character '%c'.\n", 
+                            lineNumber, string, c);
+                    break;
+                default:
+                    break;
+            }
+            return true; 
+        }
+    }
+    return false; 
+}
 
 bool containsValidCharacters(char *string) {
     int length = strlen(string);
@@ -73,7 +96,7 @@ bool containsValidCharacters(char *string) {
     }
     return true; 
 }
-const char *directives[] = {"START","END","BYTE","WORD","RESB","RESW","RESR","EXPORTS","BASE"};
+const char *directives[] = {"START","END","BYTE","WORD","RESB","RESW","RESR","EXPORTS","BASE", "EXDEF", "EXTREF"};
 /**
  * @brief Opcodes names & values in hexadecimal
   */

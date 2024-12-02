@@ -29,12 +29,13 @@ typedef struct {
     //int numInstructions;
     //int allocatedInstructionAmount;
     //instruction *instructions;
+    bool isExternal;
 } symbol;
 
 struct symbolTable {
     symbol *symbols;
-    int numberOfSymbols;
     int allocatedAmount;
+    int numberOfSymbols;
 };
 
 struct stringArray {
@@ -48,6 +49,7 @@ typedef struct {
     struct stringArray* tRecords;
     char *eRecord;
     struct stringArray* mRecords;
+    struct stringArray* dRecords;
 } objectFile;
 
 typedef struct record {

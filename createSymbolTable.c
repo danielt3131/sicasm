@@ -48,6 +48,7 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
             }
             */
             if (isValidSymbol(split->stringArray[0], symbolTable, lineNumber) && split->numStrings >= 2) {
+                symbolTable->symbols[currentSymbol].isExternal = false;
                 symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[0]) + 1);
                 strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[0]);
                 symbolTable->symbols[currentSymbol].lineNumber = lineNumber;
@@ -60,7 +61,30 @@ struct symbolTable* createSymbolTable(fileBuffer *fileBuf, int *numSymbols, bool
                 } else if (!strcmp(split->stringArray[1], "RESB")) {
                     symbolTable->symbols[currentSymbol].address = address;
                     address = address + atoi(split->stringArray[2]);
-                } else if (!strcmp(split->stringArray[1], "BYTE")) {
+                } else if (!strcmp(split->stringArray[1], "EXTDEF")) {
+                    for (int j = 2; j < split->numStrings; j++) { // Loop through symbols listed in EXDEF
+                            symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[j]) + 1);
+                            strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[j]);
+                            symbolTable->symbols[currentSymbol].address = address;
+                            symbolTable->symbols[currentSymbol].isExternal = true; // Mark as external
+                    }
+                    currentSymbol++;
+                    symbolTable->numberOfSymbols++;
+                    address += 3;
+                    freeSplit(split);
+                    continue; 
+                }  else if (!strcmp(split->stringArray[1], "EXTREF")) {
+                         for (int j = 2; j < split->numStrings; j++) { // Loop through symbols listed in EXTREF
+                          symbolTable->symbols[currentSymbol].name = malloc(strlen(split->stringArray[j]) + 1);
+                         strcpy(symbolTable->symbols[currentSymbol].name, split->stringArray[j]);
+                         symbolTable->symbols[currentSymbol].isExternal = true; // Mark as external 
+                        currentSymbol++;
+                            symbolTable->numberOfSymbols++;
+                         }
+                    freeSplit(split);
+                    continue; 
+}
+else if (!strcmp(split->stringArray[1], "BYTE")) {
                     if (split->stringArray[2][0] == 'C') {
                         int i = 2;
                         int size = 0;

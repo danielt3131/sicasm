@@ -26,6 +26,53 @@ objectFile* createSicObjectFile(struct symbolTable *symbolTable, fileBuffer *fil
     int length = strlen(buffer);
     objFile->hRecord = malloc(sizeof(char) * (length + 1));
     strcpy(objFile->hRecord, buffer);
+
+    // Generate the D record
+    char dRecordBuffer[74];
+    int numDRecords = 0;
+    int dRecordCount = 0;
+    objFile->dRecords = malloc(sizeof(struct stringArray));
+    objFile->dRecords->numStrings = 0;
+    objFile->dRecords->allocatedAmount = 2;
+    objFile->dRecords->stringArray = malloc(sizeof(char *) * objFile->dRecords->allocatedAmount);
+    for (int i = 0; i < table->numberOfSymbols; i++) {
+       if (table->symbols[i].isExternal) {
+           char temp[13];
+           sprintf(temp, "%-6s%06X", table->symbols[i].name, table->symbols[i].address);
+           numDRecords++;
+           if (numDRecords > 6) {
+               if (objFile->dRecords->numStrings >= objFile->dRecords->allocatedAmount) {
+                   objFile->dRecords->allocatedAmount *= 2;
+                   objFile->dRecords->stringArray = realloc(objFile->dRecords->stringArray, sizeof(char *) *  objFile->dRecords->allocatedAmount);
+               }
+               objFile->dRecords->stringArray[dRecordCount] = malloc(74);
+               sprintf(objFile->dRecords->stringArray[dRecordCount], "D");
+               strcat(objFile->dRecords->stringArray[dRecordCount], dRecordBuffer);
+               dRecordBuffer[0] = '\0';
+               dRecordCount++;
+               objFile->dRecords->numStrings++;
+           }
+           strcat(dRecordBuffer, temp);
+       }
+    }
+    // Generate the R record
+    char rRecordBuffer[74] = ""; 
+        for (int i = 0; i < table->numberOfSymbols; i++) {
+             if (table->symbols[i].isExternal) { 
+                 char temp[7];
+                 sprintf(temp, "R%-6s", table->symbols[i].name); 
+                 strcat(rRecordBuffer, temp); 
+                }
+            }
+
+    // Allocate memory for the R record and copy it to the object file 
+        if (strlen(rRecordBuffer) > 0) {
+         strcat(rRecordBuffer, "\n"); 
+         objFile->rRecords = malloc(strlen(rRecordBuffer) + 1);
+         strcpy(objFile->rRecords, rRecordBuffer);
+        }
+
+
     /*
     // Consume start directive
     for (int i = 0; i < table->symbols[0].lineNumber; i++) {
